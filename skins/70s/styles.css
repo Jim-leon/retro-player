@@ -164,19 +164,12 @@ img {
 
 .screen-wrapper {
    margin: 7px auto;
-   max-height: 340px;
-   max-width: 340px;
+   height: 100%;
+   width: 100%;
    min-height: 200px;
    min-width: 200px;
-   border-radius: 50%;
    background-size: contain;
    background-position: center center;
-}
-
-.screen-wrapper > img {
-   width: 100%;
-   height: 100%;
-   content: url(./imgs/screen.png);
 }
 
 .controls-container,
@@ -197,7 +190,32 @@ img {
 
 .screen-container {
    margin-top: 0;
-   height: 375px;
+   height: 470px;
+}
+
+.screen-wrapper:after {
+   content: "";
+   display: none;
+   position: absolute;
+   top: 0;
+   left: 0;
+   bottom: 0;
+   right: 0;
+   background-color: #fffffff0;
+}
+
+#playlist {
+   display: none;
+   z-index: 2;
+   position: relative;
+}
+
+#playlist:hover {
+   display: block;
+}
+
+.screen-container:after:hover {
+   display: block;
 }
 
 .display-container [class*="col-"] {

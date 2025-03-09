@@ -63,12 +63,30 @@ function selectTrack(index) {
 function loadTrack() {
    if (tracks.length === 0) return;
    const track = tracks[currentTrackIndex];
-   console.log(track);
+   // console.log(track);
 
    audioElement.src = URL.createObjectURL(track);
    audioElement.load();
    audioElement.addEventListener("loadedmetadata", () => {
       // trackLengthElement.textContent = formatTime(audioElement.duration);
+      console.log(track);
+
+      $(".display-container .trk-song").html(renderText(track.id3data.track + " " + track.id3data.title, 0, 30));
+      $(".display-container .artist").html(renderText(track.id3data.artist, 0, 30));
+      $(".display-container .album").html(renderText(track.id3data.album, 0, 30));
+
+      var B = track.id3data.picture;
+      console.log(B);
+
+      if (B) {
+         for (var C = "", D = 0; D < B.data.length; D++) C += String.fromCharCode(B.data[D]);
+         var E = "data:" + B.format + ";base64," + window.btoa(C);
+         console.log(E);
+
+         $(".screen-wrapper").css("background-image", "url(" + E + ")");
+      } else {
+         $(".screen-wrapper").css("background-image", "url(data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=)");
+      }
    });
    // audioElement.addEventListener("timeupdate", updateCurrentTime);
    audioElement.addEventListener("ended", nextTrack);
