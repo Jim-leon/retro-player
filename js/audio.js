@@ -37,6 +37,8 @@ function triggerFiles() {
 function handleFiles(event) {
    const files = event.target.files;
    tracks = Array.from(files).filter((file) => file.type === "audio/mpeg");
+   // console.log(tracks);
+
    updatePlaylist();
 }
 
@@ -44,6 +46,7 @@ function updatePlaylist() {
    const playlistElement = document.getElementById("playlist");
    playlistElement.innerHTML = "";
    tracks.forEach((track, index) => {
+      getId3Data(index, tracks);
       const trackElement = document.createElement("div");
       trackElement.textContent = track.name;
       trackElement.addEventListener("click", () => selectTrack(index));
@@ -53,8 +56,6 @@ function updatePlaylist() {
 }
 
 function selectTrack(index) {
-   console.log(index);
-
    currentTrackIndex = index;
    loadTrack();
 }
@@ -62,6 +63,8 @@ function selectTrack(index) {
 function loadTrack() {
    if (tracks.length === 0) return;
    const track = tracks[currentTrackIndex];
+   console.log(track);
+
    audioElement.src = URL.createObjectURL(track);
    audioElement.load();
    audioElement.addEventListener("loadedmetadata", () => {
@@ -247,8 +250,9 @@ function movement(meter, value) {
       style = window.getComputedStyle(document.body);
       deflection = parseInt(style.getPropertyValue("--deflection").replace("deg", ""));
    }
+
    $("#pointer" + meter).css({
-      WebkitTransform: "rotate(" + (deflection + Math.abs(value * (deflection / 100))) + "deg)",
+      WebkitTransform: "rotate(" + ((value / 255) * (Math.abs(deflection) * 2) + deflection) + "deg)",
    });
 }
 
@@ -271,7 +275,7 @@ function sliders() {
       value: 5,
       slide: function (a, b) {
          volume = true;
-         console.log(b);
+         // console.log(b);
 
          if (audioElement) {
             audioElement.volume = b.value / 100;
@@ -456,6 +460,17 @@ function cleanTxt(a) {
       d.charCodeAt(0) > 0 && (b += d);
    }
    return b.trim();
+}
+
+function getId3Data(index, files) {
+   jsmediatags.read(files[index], {
+      onSuccess: function (tag) {
+         files[index].id3data = tag.tags;
+      },
+      onError: function (error) {
+         files[index].id3data = false;
+      },
+   });
 }
 
 function showTags(a) {

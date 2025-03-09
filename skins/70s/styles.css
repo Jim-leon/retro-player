@@ -46,6 +46,7 @@ img {
    transform: rotate(var(--deflection));
    scale: 0.5;
    transform-origin: 50% 85%;
+   transition: transform 0.05s ease;
 }
 
 .labels,
