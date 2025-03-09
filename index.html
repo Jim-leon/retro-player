@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/html">
+   <head>
+      <title>Retro Player</title>
+      <script
+         src="https://code.jquery.com/jquery-2.2.4.min.js"
+         integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
+         crossorigin="anonymous"
+      ></script>
+      <script
+         src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"
+         integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="
+         crossorigin="anonymous"
+      ></script>
+
+      <link
+         href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+         rel="stylesheet"
+         integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+         crossorigin="anonymous"
+      />
+      <script
+         src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+         integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+         crossorigin="anonymous"
+      ></script>
+      <link rel="stylesheet" id="skin" type="text/css" />
+      <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" />
+   </head>
+
+   <body>
+      <div class="corners">
+         <img class="top left" />
+         <img class="top right" />
+         <img class="bottom left" />
+         <img class="bottom right" />
+      </div>
+      <div class="container">
+         <div class="row">
+            <div class="col-md-5">
+               <div class="meter-container">
+                  <div class="row">
+                     <div class="col-md-12">
+                        <span class="label outpt">OUTPUT</span>
+                     </div>
+                  </div>
+                  <div class="row">
+                     <div class="col-sm-6 col-xs-12">
+                        <div class="meter">
+                           <div class="meter-face">
+                              <img id="pointer1" />
+                           </div>
+                        </div>
+                        <div class="label lft">LEFT</div>
+                     </div>
+                     <div class="col-sm-6 col-xs-12">
+                        <div class="meter">
+                           <div class="meter-face">
+                              <img id="pointer2" />
+                           </div>
+                        </div>
+                        <div class="label rght">RIGHT</div>
+                     </div>
+                  </div>
+               </div>
+               <div class="screen-container">
+                  <div class="screen-wrapper">
+                     <img />
+                  </div>
+               </div>
+               <div class="levels-container"></div>
+            </div>
+            <div class="col-md-7">
+               <div class="display-container">
+                  <div class="display-row">
+                     <div class="trk-song" title="Track No. - Song Title"></div>
+                  </div>
+                  <div class="display-row">
+                     <div class="artist" title="Artist"></div>
+                  </div>
+                  <div class="display-row">
+                     <div class="album" title="Album"></div>
+                  </div>
+                  <div class="display-row">
+                     <div class="year-times-vol" title="Year - Time - Volume"></div>
+                     <input type="hidden" name="vol" id="vol" />
+                  </div>
+               </div>
+               <div class="levels-container">
+                  <div class="row">
+                     <div class="col-md-12">
+                        <span class="label brghtnss">BRIGHTNESS</span>
+                     </div>
+                  </div>
+                  <div class="row">
+                     <div class="col-md-12">
+                        <div class="levels sm">
+                           <span class="label min">MIN</span>
+                           <div class="slider brightness-slider"></div>
+                           <span class="label max">MAX</span>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+               <div class="controls-container">
+                  <div class="wrapper">
+                     <div class="col-md-2 col-xs-4">
+                        <div id="stopBtn" class="img halt" title="Stop Song"></div>
+                     </div>
+                     <div class="col-md-2 col-xs-4">
+                        <div id="prevBtn" class="img prev" title="Previous Song"></div>
+                     </div>
+                     <div class="col-md-2 col-xs-4">
+                        <div id="playBtn" class="img play" title="Play Song"></div>
+                     </div>
+                     <div class="col-md-2 col-xs-4">
+                        <div id="pauseBtn" class="img pause" title="Pause Song"></div>
+                     </div>
+                     <div class="col-md-2 col-xs-4">
+                        <div id="nextBtn" class="img next" title="Next Song"></div>
+                     </div>
+                     <div class="select col-md-2 col-xs-4">
+                        <form>
+                           <div class="select-song">
+                              <label for="file" style="width: 100%">
+                                 <div alt="Load Song" id="select-song" class="img select-song active" title="Load Song"></div>
+                              </label>
+                              <input type="file" class="hidden" accept="audio/*" id="fileInput" multiple webkitdirectory />
+                           </div>
+                        </form>
+                     </div>
+                     <div id="playlist"></div>
+                  </div>
+               </div>
+               <div class="levels-container">
+                  <div class="row">
+                     <div class="col-md-12">
+                        <span class="label volm">VOLUME</span>
+                     </div>
+                  </div>
+                  <div class="row">
+                     <div class="col-md-12">
+                        <div class="levels">
+                           <span class="label min">MIN</span>
+                           <div class="slider volume-slider"></div>
+                           <span class="label max">MAX</span>
+                        </div>
+                     </div>
+                  </div>
+                  <div class="row">
+                     <div class="col-md-12">
+                        <span class="label blnce">BALANCE</span>
+                     </div>
+                  </div>
+                  <div class="row">
+                     <div class="col-md-12">
+                        <div class="levels">
+                           <span class="label lft">LEFT</span>
+                           <div class="slider balance-slider"></div>
+                           <span class="label rght">RIGHT</span>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+
+      <script src="js/audio.js"></script>
+      <script src="js/jdataview.js"></script>
+      <script src="js/filereader.js"></script>
+      <script src="js/id3-minimized.js"></script>
+      <script src="js/meters.js"></script>
+   </body>
+</html>
