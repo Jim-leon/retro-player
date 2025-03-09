@@ -216,7 +216,6 @@ img {
 
 .display-row > div {
    margin: 3px 10px;
-   float: left;
    display: inline-block;
    border: 3px inset #97804a;
 }
@@ -295,10 +294,6 @@ img {
    height: 100%;
    float: left;
    opacity: 0;
-}
-
-.mask.space {
-   /*opacity: .4!important;*/
 }
 
 .slider.ui-slider .ui-slider-handle {
