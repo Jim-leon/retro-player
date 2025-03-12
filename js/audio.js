@@ -1,26 +1,29 @@
-var vaudio,
-   currentSong = 0,
-   files = null;
-
 const SKIN = "70s";
 const VU_METERS = "analogue";
-
-let style;
-let deflection;
-let audioSource;
 
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 let audioElement = new Audio();
 let currentTrackIndex = 0;
 let tracks = [];
-let analyser;
+let analyser, audioLoadOffest, style, deflection, audioSource, padding;
+let date = new Date();
+let trackPlaying = false;
+var balance = false;
+var volume = false;
+
 const leftLevelElement = document.getElementById("leftLevel");
 const rightLevelElement = document.getElementById("rightLevel");
-// const currentTimeElement = document.getElementById("currentTime");
+const stereoNode = new StereoPannerNode(audioContext, { pan: 0 });
 const trackLengthElement = document.getElementById("trackLength");
 const fileInput = document.getElementById("fileInput");
+const skinLink = document.getElementById("skin");
+const pointer1 = document.getElementById("pointer1");
+const pointer2 = document.getElementById("pointer2");
 
-sliders();
+skinLink.href = "skins/" + SKIN + "/styles.css";
+pointer1.src = pointer2.src = "skins/" + SKIN + "/imgs/needle.png";
+
+initSliders();
 
 document.getElementById("select-song").addEventListener("click", triggerFiles);
 document.getElementById("fileInput").addEventListener("change", handleFiles);
@@ -30,14 +33,36 @@ document.getElementById("stopBtn").addEventListener("click", stopTrack);
 document.getElementById("nextBtn").addEventListener("click", nextTrack);
 document.getElementById("prevBtn").addEventListener("click", prevTrack);
 
+$(document).ready(function () {
+   style = window.getComputedStyle(document.body);
+   deflection = parseInt(style.getPropertyValue("--deflection").replace("deg", ""));
+
+   setInterval(timertime, 1e2);
+
+   $(".screen-wrapper").css("background-image", "url(data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=)");
+
+   sliders();
+
+   brightness = 0.25;
+
+   $(".mask").css("opacity", brightness);
+
+   initDisplay();
+
+   insertScrews();
+});
+
+$(window).resize(function () {
+   insertScrews();
+});
+
 function triggerFiles() {
    fileInput.click();
 }
 
 function handleFiles(event) {
-   const files = event.target.files;
-   tracks = Array.from(files).filter((file) => file.type === "audio/mpeg");
-   // console.log(tracks);
+   const loadedFiles = event.target.files;
+   tracks = Array.from(loadedFiles).filter((file) => file.type === "audio/mpeg");
 
    updatePlaylist();
 }
@@ -46,7 +71,7 @@ function updatePlaylist() {
    const playlistElement = document.getElementById("playlist");
    playlistElement.innerHTML = "";
    tracks.forEach((track, index) => {
-      getId3Data(index, tracks);
+      getId3Data(track);
       const trackElement = document.createElement("div");
       trackElement.textContent = track.name;
       trackElement.addEventListener("click", () => selectTrack(index));
@@ -63,33 +88,43 @@ function selectTrack(index) {
 function loadTrack() {
    if (tracks.length === 0) return;
    const track = tracks[currentTrackIndex];
-   // console.log(track);
 
    audioElement.src = URL.createObjectURL(track);
+   var audioLoadStart = new Date();
    audioElement.load();
    audioElement.addEventListener("loadedmetadata", () => {
-      // trackLengthElement.textContent = formatTime(audioElement.duration);
-      console.log(track);
-
       $(".display-container .trk-song").html(renderText(track.id3data.track + " " + track.id3data.title, 0, 30));
       $(".display-container .artist").html(renderText(track.id3data.artist, 0, 30));
       $(".display-container .album").html(renderText(track.id3data.album, 0, 30));
+      audioElement.volume = $(".volume-slider").slider("value") / 100;
+      trackPlaying = true;
+      $(".display-container .year-times-vol").html(
+         renderText(
+            track.id3data.TDRC.data +
+               "    00:00/" +
+               formatTime(audioElement.duration) +
+               "   " +
+               "Vol: " +
+               ("00" + $(".volume-slider").slider("value").toString()).slice(-3),
+            0,
+            30
+         )
+      );
 
-      var B = track.id3data.picture;
-      console.log(B);
+      var coverArt = track.id3data.picture;
 
-      if (B) {
-         for (var C = "", D = 0; D < B.data.length; D++) C += String.fromCharCode(B.data[D]);
-         var E = "data:" + B.format + ";base64," + window.btoa(C);
-         console.log(E);
-
-         $(".screen-wrapper").css("background-image", "url(" + E + ")");
+      if (coverArt) {
+         for (var C = "", D = 0; D < coverArt.data.length; D++) {
+            C += String.fromCharCode(coverArt.data[D]);
+         }
+         $(".screen-wrapper").css("background-image", "url(" + "data:" + coverArt.format + ";base64," + window.btoa(C) + ")");
       } else {
          $(".screen-wrapper").css("background-image", "url(data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=)");
       }
    });
-   // audioElement.addEventListener("timeupdate", updateCurrentTime);
+
    audioElement.addEventListener("ended", nextTrack);
+   audioLoadOffest = (new Date() - audioLoadStart) / 1000;
    playTrack();
 }
 
@@ -119,10 +154,6 @@ function prevTrack() {
    loadTrack();
 }
 
-// function updateCurrentTime() {
-//    currentTimeElement.textContent = formatTime(audioElement.currentTime);
-// }
-
 function formatTime(seconds) {
    const minutes = Math.floor(seconds / 60);
    const secs = Math.floor(seconds % 60);
@@ -135,6 +166,7 @@ function startAnalyser() {
       analyser = audioContext.createAnalyser();
       audioSource.connect(analyser);
       analyser.connect(audioContext.destination);
+      audioSource.connect(stereoNode).connect(audioContext.destination);
    }
 
    analyser.fftSize = 2048;
@@ -158,47 +190,6 @@ function startAnalyser() {
 
    updateVU();
 }
-var sourceNode, splitter, analyser1, analyser2, padding, year, javascriptNode;
-// var analyser = context.createAnalyser();
-
-var Audio;
-
-var balance = false;
-
-var volume = false;
-
-const skinLink = document.getElementById("skin");
-skinLink.href = "skins/" + SKIN + "/styles.css";
-
-const pointer1 = document.getElementById("pointer1");
-const pointer2 = document.getElementById("pointer2");
-
-pointer1.src = pointer2.src = "skins/" + SKIN + "/imgs/needle.png";
-
-$(document).ready(function () {
-   style = window.getComputedStyle(document.body);
-   deflection = parseInt(style.getPropertyValue("--deflection").replace("deg", ""));
-
-   vaudio = document.getElementById("audio");
-
-   setInterval(timertime, 1e2);
-
-   $(".screen-wrapper").css("background-image", "url(data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=)");
-
-   sliders();
-
-   brightness = 0.25;
-
-   $(".mask").css("opacity", brightness);
-
-   initDisplay();
-
-   insertScrews();
-});
-
-$(window).resize(function () {
-   insertScrews();
-});
 
 function initDisplay() {
    (padding = 15), (columns = 30), (songwidth = columns), (albumwidth = columns), (artistwidth = columns);
@@ -274,16 +265,7 @@ function movement(meter, value) {
    });
 }
 
-function getAverageVolume(array) {
-   var values = 0,
-      average;
-   for (var i = 0; i < array.length; i++) {
-      values += array[i];
-   }
-   return values / length;
-}
-
-function sliders() {
+function initSliders() {
    var a = '<div class="my-handle ui-slider-handle"><img src="skins/' + SKIN + '/imgs/slider-knob.png" alt="slider_knob" border="0"></div>';
    $(".volume-slider").append(a);
    $(".volume-slider").slider({
@@ -293,8 +275,6 @@ function sliders() {
       value: 5,
       slide: function (a, b) {
          volume = true;
-         // console.log(b);
-
          if (audioElement) {
             audioElement.volume = b.value / 100;
          }
@@ -312,15 +292,19 @@ function sliders() {
 
    $(".balance-slider").slider({
       range: "min",
-      min: 1,
-      max: 100,
-      value: 50,
+      min: -1,
+      max: 1,
+      value: 0,
+      step: 0.01,
       slide: function (a, b) {
          balance = true;
-         a = Math.ceil(parseInt(b.value * 0.28));
-         a = a > 27 ? 27 : a;
+         a = Math.ceil(parseInt(b.value * 14) + 14);
+
          var balStr = "L" + "-".repeat(a) + "I" + "-".repeat(27 - a) + "R";
          $(".display-container .year-times-vol").html(renderText(balStr, 0, 30));
+
+         stereoNode.pan.value = b.value;
+         console.log(b.value);
       },
       stop: function (event, ui) {
          balance = false;
@@ -336,7 +320,6 @@ function sliders() {
       value: 75,
       slide: function (a, b) {
          $(".mask").css("opacity", 1 - b.value / 100);
-         // $(".mask.space").css("opacity", 1 - b.value / 200);
          brightness = 1 - b.value / 100;
       },
    });
@@ -352,7 +335,6 @@ function renderText(a, b, c) {
             (textCase = text % 2 == 0 ? "upper" : "lower"), (text = 2 * parseInt(text / 2)), (text = text.toString() + (text + 1).toString());
          else {
             var f = !1;
-            // console.log(text.charCodeAt(0))
             switch (text.charCodeAt(0)) {
                case 0:
                case 32:
@@ -448,20 +430,19 @@ function renderText(a, b, c) {
 
 function timertime() {
    if (balance || volume) return true;
-   if (files == null) {
-      var a = new Date(),
-         b = ("0" + a.getHours()).slice(-2) + ":" + ("0" + a.getMinutes()).slice(-2) + ":" + ("0" + a.getSeconds()).slice(-2);
+   if (!trackPlaying) {
+      var b = ("0" + date.getHours()).slice(-2) + ":" + ("0" + date.getMinutes()).slice(-2) + ":" + ("0" + date.getSeconds()).slice(-2);
       $(".display-container .year-times-vol").html(
          renderText("----     " + b + "     Vol: " + ("00" + $(".volume-slider").slider("value").toString()).slice(-3), 0, 30)
       );
    } else {
       $(".display-container .year-times-vol").html(
          renderText(
-            year +
+            track.id3data.TDRC.data +
                "    " +
-               secondsToMS(vaudio.currentTime) +
+               secondsToMS(audioContext.currentTime) +
                "/" +
-               secondsToMS(vaudio.duration) +
+               secondsToMS(audioElement.duration) +
                "   Vol: " +
                ("00" + $(".volume-slider").slider("value").toString()).slice(-3),
             0,
@@ -472,81 +453,15 @@ function timertime() {
    $(".mask").css("opacity", brightness);
 }
 
-function cleanTxt(a) {
-   for (var b = "", c = 0; c < 30; c++) {
-      var d = a.charAt(c);
-      d.charCodeAt(0) > 0 && (b += d);
-   }
-   return b.trim();
-}
-
-function getId3Data(index, files) {
-   jsmediatags.read(files[index], {
+function getId3Data(track) {
+   jsmediatags.read(track, {
       onSuccess: function (tag) {
-         files[index].id3data = tag.tags;
+         track.id3data = tag.tags;
       },
       onError: function (error) {
-         files[index].id3data = false;
+         track.id3data = false;
       },
    });
-}
-
-function showTags(a) {
-   function u() {
-      t ? ++s > p && (t = !1) : --s < 0 && (t = !0), $(".display-container .song").html(renderText(l, s, h)), $(".mask").css("opacity", brightness);
-   }
-   function x() {
-      w ? ++v >= q && (w = !1) : --v < 0 && (w = !0), $(".display-container .artist").html(renderText(m, v, j)), $(".mask").css("opacity", brightness);
-   }
-   function A() {
-      z ? ++y >= r && (z = !1) : --y < 0 && (z = !0), $(".display-container .album").html(renderText(n, y, i)), $(".mask").css("opacity", brightness);
-   }
-   var f = ID3.getAllTags(a);
-   // console.log(f)
-   var g = 30,
-      h = g - 3,
-      i = g,
-      j = g,
-      l = f.title,
-      m = f.artist ? f.artist : "",
-      n = f.album,
-      o = f.year ? f.year.split("-")[0] : "0000",
-      p = l.length > h ? l.length - h : 0,
-      q = m.length > j ? m.length - j : 0,
-      r = n.length > i ? n.length - i : 0;
-   track = f.track.replace(/\D/g, "#").split("#")[0];
-   year = o;
-   if (
-      ($(".display-container .trk-song").html(renderText(("0" + track).slice(-2) + " " + l, 0, g)),
-      $(".display-container .year-times-vol").html(
-         renderText(o + " 00:00/" + secondsToMS(vaudio.duration) + "   " + "Vol: " + ("00" + $(".volume-slider").slider("value").toString()).slice(-3), 0, 30)
-      ),
-      $(".display-container .artist").html(renderText(m, 0, g)),
-      $(".display-container .album").html(renderText(n, 0, i)),
-      $(".mask").css("opacity", brightness),
-      p)
-   ) {
-      l += " ";
-      var s = -1,
-         t = !0;
-      setInterval(u, 600);
-   }
-   if (q) {
-      var v = -1,
-         w = !0;
-      intervalId = setInterval(x, 600);
-   }
-   if (r) {
-      var y = -1,
-         z = !0;
-      setInterval(A, 600);
-   }
-   var B = f.picture;
-   if (B) {
-      for (var C = "", D = 0; D < B.data.length; D++) C += String.fromCharCode(B.data[D]);
-      var E = "data:" + B.format + ";base64," + window.btoa(C);
-      $(".screen-wrapper").css("background-image", "url(" + E + ")");
-   } else $(".screen-wrapper").css("background-image", "url(data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=)");
 }
 
 function secondsToMS(s) {
