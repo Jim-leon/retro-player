@@ -1,4 +1,4 @@
-const SKIN = "70s";
+const SKIN = "retro";
 const VU_METERS = "analogue";
 
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -6,24 +6,30 @@ let audioElement = new Audio();
 let currentTrackIndex = 0;
 let tracks = [];
 let analyser, audioLoadOffest, style, deflection, audioSource, padding;
-let date = new Date();
 let trackPlaying = false;
-var balance = false;
-var volume = false;
+let balance = false;
+let volume = false;
+let brightness = 0.25;
 
 const leftLevelElement = document.getElementById("leftLevel");
 const rightLevelElement = document.getElementById("rightLevel");
 const stereoNode = new StereoPannerNode(audioContext, { pan: 0 });
-const trackLengthElement = document.getElementById("trackLength");
 const fileInput = document.getElementById("fileInput");
 const skinLink = document.getElementById("skin");
 const pointer1 = document.getElementById("pointer1");
 const pointer2 = document.getElementById("pointer2");
+const playlistElement = document.getElementById("playlist");
+const displayTrkSong = document.querySelector(".display-container .trk-song");
+const displayArtist = document.querySelector(".display-container .artist");
+const displayAlbum = document.querySelector(".display-container .album");
+const displayYearTimesVol = document.querySelector(".display-container .year-times-vol");
+const screen = document.querySelector(".screen-wrapper");
+const volumeSlider = $(".volume-slider");
+const balanceSlider = $(".balance-slider");
+const brightnessSlider = $(".brightness-slider");
 
 skinLink.href = "skins/" + SKIN + "/styles.css";
 pointer1.src = pointer2.src = "skins/" + SKIN + "/imgs/needle.png";
-
-initSliders();
 
 document.getElementById("select-song").addEventListener("click", triggerFiles);
 document.getElementById("fileInput").addEventListener("change", handleFiles);
@@ -33,28 +39,18 @@ document.getElementById("stopBtn").addEventListener("click", stopTrack);
 document.getElementById("nextBtn").addEventListener("click", nextTrack);
 document.getElementById("prevBtn").addEventListener("click", prevTrack);
 
-$(document).ready(function () {
+document.addEventListener("DOMContentLoaded", () => {
    style = window.getComputedStyle(document.body);
    deflection = parseInt(style.getPropertyValue("--deflection").replace("deg", ""));
-
    setInterval(timertime, 1e2);
-
-   $(".screen-wrapper").css("background-image", "url(data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=)");
-
-   sliders();
-
-   brightness = 0.25;
-
-   $(".mask").css("opacity", brightness);
-
+   initSliders();
    initDisplay();
-
    insertScrews();
 });
 
-$(window).resize(function () {
+window.onresize = function () {
    insertScrews();
-});
+};
 
 function triggerFiles() {
    fileInput.click();
@@ -63,21 +59,34 @@ function triggerFiles() {
 function handleFiles(event) {
    const loadedFiles = event.target.files;
    tracks = Array.from(loadedFiles).filter((file) => file.type === "audio/mpeg");
-
-   updatePlaylist();
+   if (tracks.length) {
+      updatePlaylist();
+   }
 }
 
 function updatePlaylist() {
-   const playlistElement = document.getElementById("playlist");
    playlistElement.innerHTML = "";
+   showCoverArt();
    tracks.forEach((track, index) => {
-      getId3Data(track);
       const trackElement = document.createElement("div");
+      if (index == 0) trackElement.classList.add("selected");
       trackElement.textContent = track.name;
-      trackElement.addEventListener("click", () => selectTrack(index));
+      trackElement.addEventListener("click", (event) => {
+         selectTrack(index);
+         updateCurretTrack(event.target);
+      });
       playlistElement.appendChild(trackElement);
    });
-   selectTrack(0);
+   // selectTrack(0);
+}
+
+function updateCurretTrack(newTrack) {
+   Array.from(playlistElement.children)
+      .filter((child) => child != newTrack)
+      .forEach((sibling) => {
+         sibling.classList.remove("selected");
+      });
+   newTrack.classList.add("selected");
 }
 
 function selectTrack(index) {
@@ -90,37 +99,19 @@ function loadTrack() {
    const track = tracks[currentTrackIndex];
 
    audioElement.src = URL.createObjectURL(track);
-   var audioLoadStart = new Date();
+   const audioLoadStart = new Date();
    audioElement.load();
    audioElement.addEventListener("loadedmetadata", () => {
-      $(".display-container .trk-song").html(renderText(track.id3data.track + " " + track.id3data.title, 0, 30));
-      $(".display-container .artist").html(renderText(track.id3data.artist, 0, 30));
-      $(".display-container .album").html(renderText(track.id3data.album, 0, 30));
-      audioElement.volume = $(".volume-slider").slider("value") / 100;
+      displayTrkSong.innerHTML = renderText(track.id3data.track + " " + track.id3data.title, 0, 30);
+      displayArtist.innerHTML = renderText(track.id3data.artist, 0, 30);
+      displayAlbum.innerHTML = renderText(track.id3data.album, 0, 30);
+      audioElement.volume = volumeSlider.slider("value") / 100;
       trackPlaying = true;
-      $(".display-container .year-times-vol").html(
-         renderText(
-            track.id3data.TDRC.data +
-               "    00:00/" +
-               formatTime(audioElement.duration) +
-               "   " +
-               "Vol: " +
-               ("00" + $(".volume-slider").slider("value").toString()).slice(-3),
-            0,
-            30
-         )
+      displayYearTimesVol.innerHTML = renderText(
+         `${track.id3data.TDRC.data}    00:00/${formatTime(audioElement.duration)}   Vol: ` + ("00" + volumeSlider.slider("value").toString()).slice(-3),
+         0,
+         30
       );
-
-      var coverArt = track.id3data.picture;
-
-      if (coverArt) {
-         for (var C = "", D = 0; D < coverArt.data.length; D++) {
-            C += String.fromCharCode(coverArt.data[D]);
-         }
-         $(".screen-wrapper").css("background-image", "url(" + "data:" + coverArt.format + ";base64," + window.btoa(C) + ")");
-      } else {
-         $(".screen-wrapper").css("background-image", "url(data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=)");
-      }
    });
 
    audioElement.addEventListener("ended", nextTrack);
@@ -146,6 +137,7 @@ function stopTrack() {
 
 function nextTrack() {
    currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
+   updateCurretTrack(tracks[currentTrackIndex]);
    loadTrack();
 }
 
@@ -192,65 +184,36 @@ function startAnalyser() {
 }
 
 function initDisplay() {
+   screen.style.backgroundImage = "url(data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=)";
+   $(".mask").css("opacity", brightness);
    (padding = 15), (columns = 30), (songwidth = columns), (albumwidth = columns), (artistwidth = columns);
-   $(".display-container .trk-song").html(renderText("-- " + "-".repeat(songwidth), 0, columns)),
-      $(".display-container .artist").html(renderText("-".repeat(artistwidth), 0, artistwidth)),
-      $(".display-container .album").html(renderText("-".repeat(albumwidth), 0, albumwidth)),
-      $(".display-container .year-times-vol").html(
-         renderText("---- -----------      " + "Vol:" + ("00" + $(".volume-slider").slider("value").toString()).slice(-3), 0, 30)
-      );
+   displayTrkSong.innerHTML = renderText("-- " + "-".repeat(songwidth), 0, columns);
+   displayArtist.innerHTML = renderText("-".repeat(artistwidth), 0, artistwidth);
+   displayAlbum.innerHTML = renderText("-".repeat(albumwidth), 0, albumwidth);
+   displayYearTimesVol.innerHTML = renderText("---- -----------      " + "Vol:" + ("00" + volumeSlider.slider("value").toString()).slice(-3), 0, 30);
 }
 
 function insertScrews() {
    if (SKIN != "retro") return;
-   $("div.screws").remove(),
-      $('div[class*="-container"]').each(function () {
-         var padd = 7;
-         $(this).append(
-            '<div class="screws"><img src="skins/' +
-               SKIN +
-               '/imgs/screw.png" style="left:' +
-               padd +
-               "px; top:" +
-               padd +
-               "px;" +
-               angle() +
-               ');" /><img src="skins/' +
-               SKIN +
-               '/imgs/screw.png" style="right:' +
-               padd +
-               "px; top:" +
-               padd +
-               "px;" +
-               angle() +
-               ');" /><img src="skins/' +
-               SKIN +
-               '/imgs/screw.png" style="right:' +
-               padd +
-               "px; bottom:" +
-               padd +
-               "px;" +
-               angle() +
-               ');" /><img src="skins/' +
-               SKIN +
-               '/imgs/screw.png" style="left:' +
-               padd +
-               "px; bottom:" +
-               padd +
-               "px;" +
-               angle() +
-               '); /"></div>'
-         );
-      });
-}
+   $("div.screws").remove();
+   $('div[class*="-container"]').each(function () {
+      const padd = 7;
+      const screw = '<img src="skins/' + SKIN + '/imgs/screw.png" style="';
+      const end = 'px;"' + angle() + ');" />';
+      const join = `${padd}${end}${screw}`;
+      $(this).append(
+         `<div class="screws">${screw}left:${padd}px;top:${join}right:${padd}px;top:${join}right:${padd}px;bottom:${join}left:${padd}px;bottom:${padd}${end}</div>`
+      );
+   });
 
-function angle() {
-   return "transform: rotate(" + (Math.round(180 * Math.random()) + 1) + "deg";
+   function angle() {
+      return "transform: rotate(" + (Math.round(180 * Math.random()) + 1) + "deg";
+   }
 }
 
 function outputPerformanceTime(contextTime) {
-   var timestamp = context.getOutputTimestamp();
-   var elapsedTime = contextTime - timestamp.contextTime;
+   const timestamp = context.getOutputTimestamp();
+   const elapsedTime = contextTime - timestamp.contextTime;
    return timestamp.performanceTime + elapsedTime * 1000;
 }
 
@@ -259,16 +222,13 @@ function movement(meter, value) {
       style = window.getComputedStyle(document.body);
       deflection = parseInt(style.getPropertyValue("--deflection").replace("deg", ""));
    }
-
-   $("#pointer" + meter).css({
-      WebkitTransform: "rotate(" + ((value / 255) * (Math.abs(deflection) * 2) + deflection) + "deg)",
-   });
+   document.querySelector("#pointer" + meter).style.WebkitTransform = "rotate(" + ((value / 255) * (Math.abs(deflection) * 2) + deflection) + "deg)";
 }
 
 function initSliders() {
-   var a = '<div class="my-handle ui-slider-handle"><img src="skins/' + SKIN + '/imgs/slider-knob.png" alt="slider_knob" border="0"></div>';
-   $(".volume-slider").append(a);
-   $(".volume-slider").slider({
+   const knob = `<div class="my-handle ui-slider-handle"><img src="skins/${SKIN}/imgs/slider-knob.png" alt="slider_knob" border="0"></div>`;
+   volumeSlider.append(knob);
+   volumeSlider.slider({
       range: "min",
       min: 0,
       max: 100,
@@ -280,17 +240,17 @@ function initSliders() {
          }
          a = Math.ceil(b.value * 0.26);
          a = a > 26 ? 26 : a;
-         var volStr = "Vol:" + (a != Math.round(b.value * 0.26) ? "^".repeat(a - 1) + "|" + " ".repeat(26 - a) : "^".repeat(a) + " ".repeat(26 - a));
-         $(".display-container .year-times-vol").html(renderText(volStr, 0, 30));
+         const volStr = "Vol:" + (a != Math.round(b.value * 0.26) ? "^".repeat(a - 1) + "|" + " ".repeat(26 - a) : "^".repeat(a) + " ".repeat(26 - a));
+         displayYearTimesVol.innerHTML = renderText(volStr, 0, 30);
       },
       stop: function (event, ui) {
          volume = false;
       },
    });
 
-   $(".balance-slider").append(a);
+   balanceSlider.append(knob);
 
-   $(".balance-slider").slider({
+   balanceSlider.slider({
       range: "min",
       min: -1,
       max: 1,
@@ -299,10 +259,8 @@ function initSliders() {
       slide: function (a, b) {
          balance = true;
          a = Math.ceil(parseInt(b.value * 14) + 14);
-
-         var balStr = "L" + "-".repeat(a) + "I" + "-".repeat(27 - a) + "R";
-         $(".display-container .year-times-vol").html(renderText(balStr, 0, 30));
-
+         let balStr = "L" + "-".repeat(a) + "I" + "-".repeat(27 - a) + "R";
+         displayYearTimesVol.innerHTML = renderText(balStr, 0, 30);
          stereoNode.pan.value = b.value;
          console.log(b.value);
       },
@@ -311,9 +269,9 @@ function initSliders() {
       },
    });
 
-   $(".brightness-slider").append(a);
+   brightnessSlider.append(knob);
 
-   $(".brightness-slider").slider({
+   brightnessSlider.slider({
       range: "max",
       min: 50,
       max: 100,
@@ -325,20 +283,21 @@ function initSliders() {
    });
 }
 
-function renderText(a, b, c) {
-   b < 0 && (b = 0);
-   var d = "";
-   (a = a.replace(/\, /g, ",")), (a = a.slice(b));
-   for (var e = 0; e < c; e++) {
-      if (e < a.length)
-         if (((text = a.charAt(e)), (textCase = text === text.toUpperCase() ? "upper" : "lower"), $.isNumeric(text)))
+function renderText(msg, start, len) {
+   start < 0 && (start = 0);
+   let d = "";
+   msg = msg.replace(/\, /g, ",");
+   msg = msg.slice(start);
+   for (let e = 0; e < len; e++) {
+      if (e < msg.length)
+         if (((text = msg.charAt(e)), (textCase = text === text.toUpperCase() ? "upper" : "lower"), $.isNumeric(text)))
             (textCase = text % 2 == 0 ? "upper" : "lower"), (text = 2 * parseInt(text / 2)), (text = text.toString() + (text + 1).toString());
          else {
-            var f = !1;
+            f = false;
             switch (text.charCodeAt(0)) {
                case 0:
                case 32:
-                  (text = "space-comma"), (textCase = "upper"), (f = !0);
+                  (text = "space-comma"), (textCase = "upper"), (f = true);
                   break;
                case 44:
                   (text = "space-comma"), (textCase = "lower");
@@ -410,19 +369,10 @@ function renderText(a, b, c) {
                   (text = ""), (textCase = "");
             }
          }
-      else (text = "space-comma"), (textCase = "upper"), (f = !0);
+      else (text = "space-comma"), (textCase = "upper"), (f = true);
       if (text && textCase) {
-         var g = f ? "space" : "";
-         d +=
-            '<div style="background:url(skins/' +
-            SKIN +
-            "/imgs/chars/medium/" +
-            text.toLowerCase() +
-            '.jpg)" class="' +
-            textCase +
-            '"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=" class="mask ' +
-            g +
-            '" /></div>';
+         const g = f ? "space" : "";
+         d += `<div style="background:url(skins/${SKIN}/imgs/chars/medium/${text.toLowerCase()}.jpg)" class="${textCase}"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=" class="mask ${g}" /></div>`;
       }
    }
    return d;
@@ -431,23 +381,15 @@ function renderText(a, b, c) {
 function timertime() {
    if (balance || volume) return true;
    if (!trackPlaying) {
-      var b = ("0" + date.getHours()).slice(-2) + ":" + ("0" + date.getMinutes()).slice(-2) + ":" + ("0" + date.getSeconds()).slice(-2);
-      $(".display-container .year-times-vol").html(
-         renderText("----     " + b + "     Vol: " + ("00" + $(".volume-slider").slider("value").toString()).slice(-3), 0, 30)
-      );
+      let date = new Date();
+      const b = ("0" + date.getHours()).slice(-2) + ":" + ("0" + date.getMinutes()).slice(-2) + ":" + ("0" + date.getSeconds()).slice(-2);
+      displayYearTimesVol.innerHTML = renderText("----     " + b + "     Vol: " + ("00" + volumeSlider.slider("value").toString()).slice(-3), 0, 30);
    } else {
-      $(".display-container .year-times-vol").html(
-         renderText(
-            track.id3data.TDRC.data +
-               "    " +
-               secondsToMS(audioContext.currentTime) +
-               "/" +
-               secondsToMS(audioElement.duration) +
-               "   Vol: " +
-               ("00" + $(".volume-slider").slider("value").toString()).slice(-3),
-            0,
-            30
-         )
+      displayYearTimesVol.innerHTML = renderText(
+         `${tracks[currentTrackIndex].id3data.TDRC.data}    ${secondsToMS(audioContext.currentTime)}/${secondsToMS(audioElement.duration)}   Vol: ` +
+            ("00" + volumeSlider.slider("value").toString()).slice(-3),
+         0,
+         30
       );
    }
    $(".mask").css("opacity", brightness);
@@ -464,8 +406,22 @@ function getId3Data(track) {
    });
 }
 
+function showCoverArt() {
+   const track = tracks[0];
+   getId3Data(track);
+   setTimeout(() => {
+      if (track.id3data?.picture) {
+         coverArt = track.id3data.picture;
+         for (let C = "", D = 0; D < coverArt.data.length; D++) C += String.fromCharCode(coverArt.data[D]);
+         screen.style.backgroundImage = "url(" + "data:" + coverArt.format + ";base64," + window.btoa(C) + ")";
+      } else {
+         screen.style.backgroundImage = "url(data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=)";
+      }
+   }, 50);
+}
+
 function secondsToMS(s) {
-   var m = Math.floor(s / 60);
+   const m = Math.floor(s / 60);
    s -= m * 60;
    return (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + parseInt(s) : parseInt(s));
 }

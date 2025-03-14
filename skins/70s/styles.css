@@ -168,8 +168,9 @@ img {
    width: 100%;
    min-height: 200px;
    min-width: 200px;
-   background-size: contain;
+   background-size: cover;
    background-position: center center;
+   border: 3px inset #c9c9c9;
 }
 
 .controls-container,
@@ -205,13 +206,27 @@ img {
 }
 
 #playlist {
-   display: none;
+   opacity: 0;
    z-index: 2;
    position: relative;
+   background: rgb(27, 27, 27);
+   height: 100%;
+   color: white;
+   padding: 1rem 2rem;
+   font-size: 1.5rem;
+   transition: opacity 0.5s ease-in-out;
 }
 
-#playlist:hover {
-   display: block;
+#playlist div {
+   cursor: pointer;
+   padding-left: 10px;
+}
+#playlist div.selected {
+   background: cornflowerblue;
+}
+
+.screen-wrapper:hover #playlist {
+   opacity: 0.9;
 }
 
 .screen-container:after:hover {
