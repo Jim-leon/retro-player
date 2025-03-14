@@ -1,4 +1,4 @@
-const SKIN = "retro";
+const THEME = "retro";
 const VU_METERS = "analogue";
 
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -15,7 +15,7 @@ const leftLevelElement = document.getElementById("leftLevel");
 const rightLevelElement = document.getElementById("rightLevel");
 const stereoNode = new StereoPannerNode(audioContext, { pan: 0 });
 const fileInput = document.getElementById("fileInput");
-const skinLink = document.getElementById("skin");
+const themeLink = document.getElementById("theme");
 const pointer1 = document.getElementById("pointer1");
 const pointer2 = document.getElementById("pointer2");
 const playlistElement = document.getElementById("playlist");
@@ -28,8 +28,8 @@ const volumeSlider = $(".volume-slider");
 const balanceSlider = $(".balance-slider");
 const brightnessSlider = $(".brightness-slider");
 
-skinLink.href = "skins/" + SKIN + "/styles.css";
-pointer1.src = pointer2.src = "skins/" + SKIN + "/imgs/needle.png";
+themeLink.href = "theme/" + THEME + "/styles.css";
+pointer1.src = pointer2.src = "theme/" + THEME + "/imgs/needle.png";
 
 document.getElementById("select-song").addEventListener("click", triggerFiles);
 document.getElementById("fileInput").addEventListener("change", handleFiles);
@@ -73,14 +73,14 @@ function updatePlaylist() {
       trackElement.textContent = track.name;
       trackElement.addEventListener("click", (event) => {
          selectTrack(index);
-         updateCurretTrack(event.target);
+         updateCurrentTrack(event.target);
       });
       playlistElement.appendChild(trackElement);
    });
    // selectTrack(0);
 }
 
-function updateCurretTrack(newTrack) {
+function updateCurrentTrack(newTrack) {
    Array.from(playlistElement.children)
       .filter((child) => child != newTrack)
       .forEach((sibling) => {
@@ -137,7 +137,7 @@ function stopTrack() {
 
 function nextTrack() {
    currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
-   updateCurretTrack(tracks[currentTrackIndex]);
+   updateCurrentTrack(tracks[currentTrackIndex]);
    loadTrack();
 }
 
@@ -194,11 +194,11 @@ function initDisplay() {
 }
 
 function insertScrews() {
-   if (SKIN != "retro") return;
+   if (THEME != "retro") return;
    $("div.screws").remove();
    $('div[class*="-container"]').each(function () {
       const padd = 7;
-      const screw = '<img src="skins/' + SKIN + '/imgs/screw.png" style="';
+      const screw = '<img src="theme/' + THEME + '/imgs/screw.png" style="';
       const end = 'px;"' + angle() + ');" />';
       const join = `${padd}${end}${screw}`;
       $(this).append(
@@ -226,7 +226,7 @@ function movement(meter, value) {
 }
 
 function initSliders() {
-   const knob = `<div class="my-handle ui-slider-handle"><img src="skins/${SKIN}/imgs/slider-knob.png" alt="slider_knob" border="0"></div>`;
+   const knob = `<div class="my-handle ui-slider-handle"><img src="theme/${THEME}/imgs/slider-knob.png" alt="slider_knob" border="0"></div>`;
    volumeSlider.append(knob);
    volumeSlider.slider({
       range: "min",
@@ -372,7 +372,7 @@ function renderText(msg, start, len) {
       else (text = "space-comma"), (textCase = "upper"), (f = true);
       if (text && textCase) {
          const g = f ? "space" : "";
-         d += `<div style="background:url(skins/${SKIN}/imgs/chars/medium/${text.toLowerCase()}.jpg)" class="${textCase}"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=" class="mask ${g}" /></div>`;
+         d += `<div style="background:url(theme/${THEME}/imgs/chars/medium/${text.toLowerCase()}.jpg)" class="${textCase}"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=" class="mask ${g}" /></div>`;
       }
    }
    return d;
