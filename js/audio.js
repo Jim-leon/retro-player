@@ -1,11 +1,11 @@
-const THEME = "retro";
+const THEME = "70s";
 const VU_METERS = "analogue";
 
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 let audioElement = new Audio();
 let currentTrackIndex = 0;
 let tracks = [];
-let analyser, audioLoadOffest, style, deflection, audioSource, padding;
+let analyser, audioLoadOffest, style, deflection, audioSource;
 let trackPlaying = false;
 let balance = false;
 let volume = false;
@@ -29,8 +29,9 @@ const balanceSlider = $(".balance-slider");
 const brightnessSlider = $(".brightness-slider");
 
 themeLink.href = "theme/" + THEME + "/styles.css";
-pointer1.src = pointer2.src = "theme/" + THEME + "/imgs/needle.png";
 
+pointer1.src = pointer2.src = "theme/" + THEME + "/imgs/needle.png";
+document.getElementById("logo").src = "theme/" + THEME + "/imgs/logo.png";
 document.getElementById("select-song").addEventListener("click", triggerFiles);
 document.getElementById("fileInput").addEventListener("change", handleFiles);
 document.getElementById("playBtn").addEventListener("click", playTrack);
@@ -186,10 +187,9 @@ function startAnalyser() {
 function initDisplay() {
    screen.style.backgroundImage = "url(data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=)";
    $(".mask").css("opacity", brightness);
-   (padding = 15), (columns = 30), (songwidth = columns), (albumwidth = columns), (artistwidth = columns);
-   displayTrkSong.innerHTML = renderText("-- " + "-".repeat(songwidth), 0, columns);
-   displayArtist.innerHTML = renderText("-".repeat(artistwidth), 0, artistwidth);
-   displayAlbum.innerHTML = renderText("-".repeat(albumwidth), 0, albumwidth);
+   displayTrkSong.innerHTML = renderText("-- " + "-".repeat(songwidth), 0, 30);
+   displayArtist.innerHTML = renderText("-".repeat(artistwidth), 0, 30);
+   displayAlbum.innerHTML = renderText("-".repeat(albumwidth), 0, 30);
    displayYearTimesVol.innerHTML = renderText("---- -----------      " + "Vol:" + ("00" + volumeSlider.slider("value").toString()).slice(-3), 0, 30);
 }
 
@@ -197,17 +197,15 @@ function insertScrews() {
    if (THEME != "retro") return;
    $("div.screws").remove();
    $('div[class*="-container"]').each(function () {
-      const padd = 7;
-      const screw = '<img src="theme/' + THEME + '/imgs/screw.png" style="';
-      const end = 'px;"' + angle() + ');" />';
-      const join = `${padd}${end}${screw}`;
+      const padd = "7px;";
+      const screw = `<img src="theme/${THEME}/imgs/screw.png" style="`;
       $(this).append(
-         `<div class="screws">${screw}left:${padd}px;top:${join}right:${padd}px;top:${join}right:${padd}px;bottom:${join}left:${padd}px;bottom:${padd}${end}</div>`
+         `<div class="screws">${screw}left:${padd}top:${padd}${angle()}"/>${screw}right:${padd}top:${padd}${angle()}"/>${screw}right:${padd}bottom:${padd}${angle()}"/>${screw}left:${padd}bottom:${padd}${angle()}"/></div>`
       );
    });
 
    function angle() {
-      return "transform: rotate(" + (Math.round(180 * Math.random()) + 1) + "deg";
+      return "transform:rotate(" + (Math.round(180 * Math.random()) + 1) + "deg);";
    }
 }
 
