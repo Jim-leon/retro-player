@@ -214,6 +214,7 @@ img {
 #playlist {
    opacity: 0;
    z-index: 2;
+   overflow: scroll;
    position: relative;
    background: rgb(27, 27, 27);
    height: 100%;
