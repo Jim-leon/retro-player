@@ -1,5 +1,7 @@
 const THEME = "70s";
 const VU_METERS = "analogue";
+const CHAR_DIR = `theme/${THEME}/imgs/chars/medium/`;
+const DISPLAY_LENGTH = 30;
 
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 let audioElement = new Audio();
@@ -88,18 +90,18 @@ function updatePlaylist() {
       const album = trackData.album;
       const genre = trackData.genre;
       year = trackData.TDRC.data;
-      displayTrkSong.innerHTML = renderText(centreText(artist, 30), 0, 30);
-      displayArtist.innerHTML = renderText(centreText(album, 30), 0, 30);
-      displayAlbum.innerHTML = renderText(centreText(genre, 30), 0, 30);
-      displayYearTimesVol.innerHTML = renderText(centreText(year, 30), 0, 30);
+      displayTrkSong.innerHTML = renderText(centreText(artist));
+      displayArtist.innerHTML = renderText(centreText(album));
+      displayAlbum.innerHTML = renderText(centreText(genre));
+      displayYearTimesVol.innerHTML = renderText(centreText(year));
    }, 50);
 
    audioElement.volume = volumeSlider.slider("value") / 100;
 }
 
-function centreText(text, width) {
-   const lpad = width / 2 - text.length / 2;
-   const rpad = width - lpad + text.length;
+function centreText(text) {
+   const lpad = DISPLAY_LENGTH / 2 - text.length / 2;
+   const rpad = DISPLAY_LENGTH - lpad + text.length;
    return " ".repeat(lpad) + text + " ".repeat(rpad);
 }
 
@@ -125,16 +127,12 @@ function loadTrack() {
    const audioLoadStart = new Date();
    audioElement.load();
    audioElement.addEventListener("loadedmetadata", () => {
-      displayTrkSong.innerHTML = renderText(track.id3data.track + " " + track.id3data.title, 0, 30);
-      displayArtist.innerHTML = renderText(track.id3data.artist, 0, 30);
-      displayAlbum.innerHTML = renderText(track.id3data.album, 0, 30);
+      displayTrkSong.innerHTML = renderText(track.id3data.track + " " + track.id3data.title);
+      displayArtist.innerHTML = renderText(track.id3data.artist);
+      displayAlbum.innerHTML = renderText(track.id3data.album);
       audioElement.volume = volumeSlider.slider("value") / 100;
       trackPlaying = true;
-      displayYearTimesVol.innerHTML = renderText(
-         `${track.id3data.TDRC.data}    00:00/${formatTime(audioElement.duration)}    Vol ` + ("00" + volumeSlider.slider("value").toString()).slice(-3),
-         0,
-         30
-      );
+      displayYearTimesVol.innerHTML = renderText(`${track.id3data.TDRC.data}    00:00/${formatTime(audioElement.duration)}    Vol ` + getVolume());
    });
 
    audioElement.addEventListener("ended", nextTrack);
@@ -208,11 +206,11 @@ function startAnalyser() {
 
 function initDisplay() {
    screen.style.backgroundImage = "url(data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=)";
-   $(".mask").css("opacity", brightness);
-   displayTrkSong.innerHTML = renderText("-".repeat(30), 0, 30);
-   displayArtist.innerHTML = renderText("-".repeat(30), 0, 30);
-   displayAlbum.innerHTML = renderText("-".repeat(30), 0, 30);
-   displayYearTimesVol.innerHTML = renderText("---- -----------       Vol" + ("00" + volumeSlider.slider("value").toString()).slice(-3), 0, 30);
+   mask();
+   displayTrkSong.innerHTML = renderText("-".repeat(30));
+   displayArtist.innerHTML = renderText("-".repeat(30));
+   displayAlbum.innerHTML = renderText("-".repeat(30));
+   displayYearTimesVol.innerHTML = renderText("---- -----------       Vol" + getVolume());
 }
 
 function insertScrews() {
@@ -222,7 +220,12 @@ function insertScrews() {
       const padd = "7px;";
       const screw = `<img src="theme/${THEME}/imgs/screw.png" style="`;
       $(this).append(
-         `<div class="screws">${screw}left:${padd}top:${padd}${angle()}"/>${screw}right:${padd}top:${padd}${angle()}"/>${screw}right:${padd}bottom:${padd}${angle()}"/>${screw}left:${padd}bottom:${padd}${angle()}"/></div>`
+         `<div class="screws">
+         ${screw}left:${padd}top:${padd}${angle()}"/>
+         ${screw}right:${padd}top:${padd}${angle()}"/>
+         ${screw}right:${padd}bottom:${padd}${angle()}"/>
+         ${screw}left:${padd}bottom:${padd}${angle()}"/>
+         </div>`
       );
    });
 
@@ -261,7 +264,7 @@ function initSliders() {
          a = Math.ceil(b.value * 0.27);
          a = a > 27 ? 27 : a;
          const volStr = "Vol" + (a != Math.round(b.value * 0.27) ? "^".repeat(a - 1) + "|" + " ".repeat(27 - a) : "^".repeat(a) + " ".repeat(27 - a));
-         displayYearTimesVol.innerHTML = renderText(volStr, 0, 30);
+         displayYearTimesVol.innerHTML = renderText(volStr);
       },
       stop: function (event, ui) {
          volume = false;
@@ -280,7 +283,7 @@ function initSliders() {
          balance = true;
          a = Math.ceil(parseInt(b.value * 14) + 14);
          let balStr = "L" + "-".repeat(a) + "i" + "-".repeat(27 - a) + "R";
-         displayYearTimesVol.innerHTML = renderText(balStr, 0, 30);
+         displayYearTimesVol.innerHTML = renderText(balStr);
          stereoNode.pan.value = b.value;
       },
       stop: function (event, ui) {
@@ -296,18 +299,16 @@ function initSliders() {
       max: 100,
       value: 75,
       slide: function (a, b) {
-         $(".mask").css("opacity", 1 - b.value / 100);
          brightness = 1 - b.value / 100;
+         mask();
       },
    });
 }
 
-function renderText(msg, start, len) {
-   start < 0 && (start = 0);
+function renderText(msg) {
    let d = "";
    msg = msg.replace(/\, /g, ",");
-   msg = msg.slice(start);
-   for (let e = 0; e < len; e++) {
+   for (let e = 0; e < DISPLAY_LENGTH; e++) {
       if (e < msg.length)
          if (((text = msg.charAt(e)), (textCase = text === text.toUpperCase() ? "upper" : "lower"), $.isNumeric(text)))
             (textCase = text % 2 == 0 ? "upper" : "lower"), (text = 2 * parseInt(text / 2)), (text = text.toString() + (text + 1).toString());
@@ -391,7 +392,9 @@ function renderText(msg, start, len) {
       else (text = "space-comma"), (textCase = "upper"), (f = true);
       if (text && textCase) {
          const g = f ? "space" : "";
-         d += `<div style="background:url(theme/${THEME}/imgs/chars/medium/${text.toLowerCase()}.jpg)" class="${textCase}"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=" class="mask ${g}" /></div>`;
+         d += `<div style="background:url(${CHAR_DIR}${text.toLowerCase()}.jpg)" class="${textCase}">
+               <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=" class="mask ${g}" />
+               </div>`;
       }
    }
    return d;
@@ -399,27 +402,34 @@ function renderText(msg, start, len) {
 
 function timertime() {
    if (balance || volume) return true;
-
    const yr = year ? year : "----";
-
    if (!trackPlaying) {
       const date = new Date();
-      const hours = ("0" + date.getHours()).slice(-2);
-      const mins = ("0" + date.getMinutes()).slice(-2);
-      const secs = ("0" + date.getSeconds()).slice(-2);
+      const hours = String(date.getHours()).padStart(2);
+      const mins = String(date.getMinutes()).padStart(2);
+      const secs = String(date.getSeconds()).padStart(2);
       const blink = secs % 2 ? " " : "-";
       const b = hours + blink + mins + blink + secs;
-
-      displayYearTimesVol.innerHTML = renderText(yr + "      " + b + "     Vol " + ("00" + volumeSlider.slider("value").toString()).slice(-3), 0, 30);
+      displayYearTimesVol.innerHTML = renderText(yr + "      " + b + "     Vol " + getVolume());
    } else {
       displayYearTimesVol.innerHTML = renderText(
-         `${yr}    ${secondsToMS(audioContext.currentTime)}/${secondsToMS(audioElement.duration)}    Vol ` +
-            ("00" + volumeSlider.slider("value").toString()).slice(-3),
+         `${yr}    ${formatTime(audioContext.currentTime)}/${formatTime(audioElement.duration)}    Vol ` + getVolume(),
          0,
          30
       );
    }
-   $(".mask").css("opacity", brightness);
+   mask();
+}
+
+function mask() {
+   const masks = document.querySelectorAll(".mask");
+   masks.forEach((mask) => {
+      mask.style.opacity = brightness;
+   });
+}
+
+function getVolume() {
+   return String(volumeSlider.slider("value")).padStart(3, "0");
 }
 
 function getId3Data(track) {
@@ -448,10 +458,4 @@ function showCoverArt() {
          screen.style.backgroundImage = "url(data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=)";
       }
    }, 50);
-}
-
-function secondsToMS(s) {
-   const m = Math.floor(s / 60);
-   s -= m * 60;
-   return (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + parseInt(s) : parseInt(s));
 }
