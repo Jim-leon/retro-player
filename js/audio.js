@@ -24,16 +24,16 @@ const playlistElement = document.getElementById("playlist");
 const displayTrkSong = document.querySelector(".display-container .trk-song");
 const displayArtist = document.querySelector(".display-container .artist");
 const displayAlbum = document.querySelector(".display-container .album");
-const displayYearTimesVol = document.querySelector(".display-container .year-times-vol");
+const displayMiscInfo = document.querySelector(".display-container .year-times-vol");
 const screen = document.querySelector(".screen-wrapper");
 const volumeSlider = $(".volume-slider");
 const balanceSlider = $(".balance-slider");
 const brightnessSlider = $(".brightness-slider");
 
-themeLink.href = "theme/" + THEME + "/styles.css";
+themeLink.href = `theme/${THEME}/styles.css`;
 
-pointer1.src = pointer2.src = "theme/" + THEME + "/imgs/needle.png";
-document.getElementById("logo").src = "theme/" + THEME + "/imgs/logo.png";
+pointer1.src = pointer2.src = `theme/${THEME}/imgs/needle.png`;
+document.getElementById("logo").src = `theme/${THEME}/imgs/logo.png`;
 document.getElementById("select-song").addEventListener("click", triggerFiles);
 document.getElementById("fileInput").addEventListener("change", handleFiles);
 document.getElementById("playBtn").addEventListener("click", playTrack);
@@ -63,14 +63,12 @@ function handleFiles(event) {
    const loadedFiles = event.target.files;
    tracks = [];
    tracks = Array.from(loadedFiles).filter((file) => file.type === "audio/mpeg");
-   if (tracks.length) {
-      updatePlaylist();
-   }
+   if (tracks.length) updatePlaylist();
 }
 
 function updatePlaylist() {
    playlistElement.innerHTML = "";
-   showCoverArt();
+
    tracks.forEach((track, index) => {
       getId3Data(track);
       const trackElement = document.createElement("div");
@@ -82,18 +80,20 @@ function updatePlaylist() {
       });
       playlistElement.appendChild(trackElement);
    });
+
    // selectTrack(0);
 
    setTimeout(() => {
       const trackData = tracks[0].id3data;
+      showCoverArt(trackData);
       const artist = trackData.artist;
       const album = trackData.album;
       const genre = trackData.genre;
-      year = trackData.TDRC.data;
+      year = trackData.year || trackData.TDRC.data;
       displayTrkSong.innerHTML = renderText(centreText(artist));
       displayArtist.innerHTML = renderText(centreText(album));
       displayAlbum.innerHTML = renderText(centreText(genre));
-      displayYearTimesVol.innerHTML = renderText(centreText(year));
+      displayMiscInfo.innerHTML = renderText(centreText(year));
    }, 50);
 
    audioElement.volume = volumeSlider.slider("value") / 100;
@@ -132,7 +132,7 @@ function loadTrack() {
       displayAlbum.innerHTML = renderText(track.id3data.album);
       audioElement.volume = volumeSlider.slider("value") / 100;
       trackPlaying = true;
-      displayYearTimesVol.innerHTML = renderText(`${track.id3data.TDRC.data}    00:00/${formatTime(audioElement.duration)}    Vol ` + getVolume());
+      displayMiscInfo.innerHTML = renderText(`${track.id3data.TDRC.data}    00:00/${formatTime(audioElement.duration)}    ${getVolume()}`);
    });
 
    audioElement.addEventListener("ended", nextTrack);
@@ -207,19 +207,24 @@ function startAnalyser() {
 function initDisplay() {
    screen.style.backgroundImage = "url(data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=)";
    mask();
-   displayTrkSong.innerHTML = renderText("-".repeat(30));
-   displayArtist.innerHTML = renderText("-".repeat(30));
-   displayAlbum.innerHTML = renderText("-".repeat(30));
-   displayYearTimesVol.innerHTML = renderText("---- -----------       Vol" + getVolume());
+   displayTrkSong.innerHTML = renderText("-".repeat(DISPLAY_LENGTH));
+   displayArtist.innerHTML = renderText("-".repeat(DISPLAY_LENGTH));
+   displayAlbum.innerHTML = renderText("-".repeat(DISPLAY_LENGTH));
+   displayMiscInfo.innerHTML = renderText(`---- -----------      ${getVolume()}`);
 }
 
 function insertScrews() {
    if (THEME != "retro") return;
-   $("div.screws").remove();
-   $('div[class*="-container"]').each(function () {
+   const screws = document.querySelectorAll(".screws");
+   screws.forEach((screw) => {
+      screw.remove();
+   });
+
+   document.querySelectorAll('div[class*="-container"]').forEach((div) => {
       const padd = "7px;";
       const screw = `<img src="theme/${THEME}/imgs/screw.png" style="`;
-      $(this).append(
+      div.insertAdjacentHTML(
+         "beforeend",
          `<div class="screws">
          ${screw}left:${padd}top:${padd}${angle()}"/>
          ${screw}right:${padd}top:${padd}${angle()}"/>
@@ -230,7 +235,7 @@ function insertScrews() {
    });
 
    function angle() {
-      return "transform:rotate(" + (Math.round(180 * Math.random()) + 1) + "deg);";
+      return `transform:rotate(${Math.round(180 * Math.random()) + 1}deg);`;
    }
 }
 
@@ -250,6 +255,7 @@ function movement(meter, value) {
 
 function initSliders() {
    const knob = `<div class="my-handle ui-slider-handle"><img src="theme/${THEME}/imgs/slider-knob.png" alt="slider_knob" border="0"></div>`;
+
    volumeSlider.append(knob);
    volumeSlider.slider({
       range: "min",
@@ -258,13 +264,11 @@ function initSliders() {
       value: 5,
       slide: function (a, b) {
          volume = true;
-         if (audioElement) {
-            audioElement.volume = b.value / 100;
-         }
+         if (audioElement) audioElement.volume = b.value / 100;
          a = Math.ceil(b.value * 0.27);
          a = a > 27 ? 27 : a;
          const volStr = "Vol" + (a != Math.round(b.value * 0.27) ? "^".repeat(a - 1) + "|" + " ".repeat(27 - a) : "^".repeat(a) + " ".repeat(27 - a));
-         displayYearTimesVol.innerHTML = renderText(volStr);
+         displayMiscInfo.innerHTML = renderText(volStr);
       },
       stop: function (event, ui) {
          volume = false;
@@ -272,7 +276,6 @@ function initSliders() {
    });
 
    balanceSlider.append(knob);
-
    balanceSlider.slider({
       range: "min",
       min: -1,
@@ -283,7 +286,7 @@ function initSliders() {
          balance = true;
          a = Math.ceil(parseInt(b.value * 14) + 14);
          let balStr = "L" + "-".repeat(a) + "i" + "-".repeat(27 - a) + "R";
-         displayYearTimesVol.innerHTML = renderText(balStr);
+         displayMiscInfo.innerHTML = renderText(balStr);
          stereoNode.pan.value = b.value;
       },
       stop: function (event, ui) {
@@ -292,7 +295,6 @@ function initSliders() {
    });
 
    brightnessSlider.append(knob);
-
    brightnessSlider.slider({
       range: "max",
       min: 50,
@@ -405,19 +407,14 @@ function timertime() {
    const yr = year ? year : "----";
    if (!trackPlaying) {
       const date = new Date();
-      const hours = String(date.getHours()).padStart(2);
-      const mins = String(date.getMinutes()).padStart(2);
-      const secs = String(date.getSeconds()).padStart(2);
+      const hours = String(date.getHours()).padStart(2, "0");
+      const mins = String(date.getMinutes()).padStart(2, "0");
+      const secs = String(date.getSeconds()).padStart(2, "0");
       const blink = secs % 2 ? " " : "-";
-      const b = hours + blink + mins + blink + secs;
-      displayYearTimesVol.innerHTML = renderText(yr + "      " + b + "     Vol " + getVolume());
-   } else {
-      displayYearTimesVol.innerHTML = renderText(
-         `${yr}    ${formatTime(audioContext.currentTime)}/${formatTime(audioElement.duration)}    Vol ` + getVolume(),
-         0,
-         30
-      );
-   }
+      const time = `${hours}${blink}${mins}${blink}${secs}`;
+      displayMiscInfo.innerHTML = renderText(`${yr}      ${time}     ${getVolume()}`);
+   } else displayMiscInfo.innerHTML = renderText(`${yr}    ${formatTime(audioContext.currentTime)}/${formatTime(audioElement.duration)}    ${getVolume()}`);
+
    mask();
 }
 
@@ -429,7 +426,7 @@ function mask() {
 }
 
 function getVolume() {
-   return String(volumeSlider.slider("value")).padStart(3, "0");
+   return `Vol ${String(volumeSlider.slider("value")).padStart(3, "0")}`;
 }
 
 function getId3Data(track) {
@@ -443,19 +440,13 @@ function getId3Data(track) {
    });
 }
 
-function showCoverArt() {
-   const track = tracks[0];
-   getId3Data(track);
-   setTimeout(() => {
-      if (track.id3data?.picture) {
-         coverArt = track.id3data.picture;
-         let C = "";
-         for (D = 0; D < coverArt.data.length; D++) {
-            C += String.fromCharCode(coverArt.data[D]);
-         }
-         screen.style.backgroundImage = "url(" + "data:" + coverArt.format + ";base64," + window.btoa(C) + ")";
-      } else {
-         screen.style.backgroundImage = "url(data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=)";
+function showCoverArt(data) {
+   if (data?.picture) {
+      coverData = data.picture;
+      let coverArt = "";
+      for (dataBlock = 0; dataBlock < coverData.data.length; dataBlock++) {
+         coverArt += String.fromCharCode(coverData.data[dataBlock]);
       }
-   }, 50);
+      screen.style.backgroundImage = `url(data:${coverData.format};base64,${window.btoa(coverArt)})`;
+   } else screen.style.backgroundImage = "url(data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=)";
 }

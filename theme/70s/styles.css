@@ -287,8 +287,8 @@ img {
 
 .corners > img {
    position: absolute;
-   width: 3vw;
-   height: 3vw;
+   width: 2vw;
+   height: 2vw;
    content: url(./imgs/corner.png);
 }
 
@@ -298,35 +298,35 @@ img {
 }
 
 .corners .top {
-   top: 0;
+   top: 1vw;
 }
 
 .corners .bottom {
-   bottom: 0;
+   bottom: 1vw;
 }
 
 .corners .left {
-   left: 0;
+   left: 1vw;
 }
 
 .corners .right {
-   right: 0;
+   right: 1vw;
 }
 
 .corners .top.left {
-   transform: rotate(-90deg);
+   transform: rotate(10deg);
 }
 
 .corners .top.right {
-   transform: rotate(0);
+   transform: rotate(5deg);
 }
 
 .corners .bottom.left {
-   transform: rotate(180deg);
+   transform: rotate(20deg);
 }
 
 .corners .bottom.right {
-   transform: rotate(90deg);
+   transform: rotate(33deg);
 }
 
 .mask {
