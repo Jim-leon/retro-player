@@ -17,10 +17,7 @@ const leftLevelElement = document.getElementById("leftLevel");
 const rightLevelElement = document.getElementById("rightLevel");
 const stereoNode = new StereoPannerNode(audioContext, { pan: 0 });
 const fileInput = document.getElementById("fileInput");
-const themeLink = document.getElementById("theme");
-const pointer1 = document.getElementById("pointer1");
-const pointer2 = document.getElementById("pointer2");
-const playlistElement = document.getElementById("playlist");
+const playlist = document.getElementById("playlist");
 const displayTrkSong = document.querySelector(".display-container .trk-song");
 const displayArtist = document.querySelector(".display-container .artist");
 const displayAlbum = document.querySelector(".display-container .album");
@@ -30,14 +27,13 @@ const volumeSlider = $(".volume-slider");
 const balanceSlider = $(".balance-slider");
 const brightnessSlider = $(".brightness-slider");
 
-themeLink.href = `theme/${THEME}/styles.css`;
-
-pointer1.src = pointer2.src = `theme/${THEME}/imgs/needle.png`;
+document.getElementById("pointer1").src = document.getElementById("pointer2").src = `theme/${THEME}/imgs/needle.png`;
+document.getElementById("theme").href = `theme/${THEME}/styles.css`;
 document.getElementById("logo").src = `theme/${THEME}/imgs/logo.png`;
 document.getElementById("select-song").addEventListener("click", triggerFiles);
 document.getElementById("fileInput").addEventListener("change", handleFiles);
-document.getElementById("playBtn").addEventListener("click", playTrack);
 document.getElementById("pauseBtn").addEventListener("click", pauseTrack);
+document.getElementById("playBtn").addEventListener("click", playTrack);
 document.getElementById("stopBtn").addEventListener("click", stopTrack);
 document.getElementById("nextBtn").addEventListener("click", nextTrack);
 document.getElementById("prevBtn").addEventListener("click", prevTrack);
@@ -61,14 +57,15 @@ function triggerFiles() {
 
 function handleFiles(event) {
    const loadedFiles = event.target.files;
+   console.log(loadedFiles);
+
    tracks = [];
    tracks = Array.from(loadedFiles).filter((file) => file.type === "audio/mpeg");
    if (tracks.length) updatePlaylist();
 }
 
 function updatePlaylist() {
-   playlistElement.innerHTML = "";
-
+   playlist.innerHTML = "";
    tracks.forEach((track, index) => {
       getId3Data(track);
       const trackElement = document.createElement("div");
@@ -77,12 +74,11 @@ function updatePlaylist() {
       trackElement.addEventListener("click", (event) => {
          selectTrack(index);
          updateCurrentTrack(event.target);
+         trackPlaying = true;
       });
-      playlistElement.appendChild(trackElement);
+      playlist.appendChild(trackElement);
    });
-
    // selectTrack(0);
-
    setTimeout(() => {
       const trackData = tracks[0].id3data;
       showCoverArt(trackData);
@@ -102,11 +98,11 @@ function updatePlaylist() {
 function centreText(text) {
    const lpad = DISPLAY_LENGTH / 2 - text.length / 2;
    const rpad = DISPLAY_LENGTH - lpad + text.length;
-   return " ".repeat(lpad) + text + " ".repeat(rpad);
+   return `${" ".repeat(lpad)}${text}${" ".repeat(rpad)}`;
 }
 
 function updateCurrentTrack(newTrack) {
-   Array.from(playlistElement.children)
+   Array.from(playlist.children)
       .filter((child) => child != newTrack)
       .forEach((sibling) => {
          sibling.classList.remove("selected");
@@ -122,29 +118,33 @@ function selectTrack(index) {
 function loadTrack() {
    if (tracks.length === 0) return;
    const track = tracks[currentTrackIndex];
-
    audioElement.src = URL.createObjectURL(track);
-   const audioLoadStart = new Date();
+
    audioElement.load();
    audioElement.addEventListener("loadedmetadata", () => {
-      displayTrkSong.innerHTML = renderText(track.id3data.track + " " + track.id3data.title);
+      displayTrkSong.innerHTML = renderText(`${track.id3data.track} ${track.id3data.title}`);
       displayArtist.innerHTML = renderText(track.id3data.artist);
       displayAlbum.innerHTML = renderText(track.id3data.album);
       audioElement.volume = volumeSlider.slider("value") / 100;
-      trackPlaying = true;
-      displayMiscInfo.innerHTML = renderText(`${track.id3data.TDRC.data}    00:00/${formatTime(audioElement.duration)}    ${getVolume()}`);
+      displayMiscInfo.innerHTML = renderText(`${year}    00:00/${formatTime(audioElement.duration)}    ${getVolume()}`);
    });
-
    audioElement.addEventListener("ended", nextTrack);
-   audioLoadOffest = (new Date() - audioLoadStart) / 1000;
-   playTrack();
 }
 
 function playTrack() {
-   audioContext.resume().then(() => {
+   if (trackPlaying) {
+      audioContext.resume().then(() => {
+         audioElement.play();
+         startAnalyser();
+      });
+   } else {
+      const audioLoadStart = new Date();
+      selectTrack(currentTrackIndex);
+      trackPlaying = true;
       audioElement.play();
+      audioLoadOffest = (new Date() - audioLoadStart) / 1000;
       startAnalyser();
-   });
+   }
 }
 
 function pauseTrack() {
@@ -226,10 +226,10 @@ function insertScrews() {
       div.insertAdjacentHTML(
          "beforeend",
          `<div class="screws">
-         ${screw}left:${padd}top:${padd}${angle()}"/>
-         ${screw}right:${padd}top:${padd}${angle()}"/>
-         ${screw}right:${padd}bottom:${padd}${angle()}"/>
-         ${screw}left:${padd}bottom:${padd}${angle()}"/>
+            ${screw}left:${padd}top:${padd}${angle()}"/>
+            ${screw}right:${padd}top:${padd}${angle()}"/>
+            ${screw}right:${padd}bottom:${padd}${angle()}"/>
+            ${screw}left:${padd}bottom:${padd}${angle()}"/>
          </div>`
       );
    });
@@ -250,11 +250,13 @@ function movement(meter, value) {
       style = window.getComputedStyle(document.body);
       deflection = parseInt(style.getPropertyValue("--deflection").replace("deg", ""));
    }
-   document.querySelector("#pointer" + meter).style.WebkitTransform = "rotate(" + ((value / 255) * (Math.abs(deflection) * 2) + deflection) + "deg)";
+   document.querySelector("#pointer" + meter).style.WebkitTransform = `rotate(${(value / 255) * (Math.abs(deflection) * 2) + deflection}deg)`;
 }
 
 function initSliders() {
-   const knob = `<div class="my-handle ui-slider-handle"><img src="theme/${THEME}/imgs/slider-knob.png" alt="slider_knob" border="0"></div>`;
+   const knob = `<div class="my-handle ui-slider-handle">
+                    <img src="theme/${THEME}/imgs/slider-knob.png" alt="slider_knob" border="0">
+                 </div>`;
 
    volumeSlider.append(knob);
    volumeSlider.slider({
@@ -395,7 +397,7 @@ function renderText(msg) {
       if (text && textCase) {
          const g = f ? "space" : "";
          d += `<div style="background:url(${CHAR_DIR}${text.toLowerCase()}.jpg)" class="${textCase}">
-               <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=" class="mask ${g}" />
+                  <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=" class="mask ${g}" />
                </div>`;
       }
    }
@@ -414,7 +416,6 @@ function timertime() {
       const time = `${hours}${blink}${mins}${blink}${secs}`;
       displayMiscInfo.innerHTML = renderText(`${yr}      ${time}     ${getVolume()}`);
    } else displayMiscInfo.innerHTML = renderText(`${yr}    ${formatTime(audioContext.currentTime)}/${formatTime(audioElement.duration)}    ${getVolume()}`);
-
    mask();
 }
 
