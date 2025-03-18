@@ -63,7 +63,7 @@ img {
 .meter {
    height: 113px;
    width: 100%;
-   background-image: url(./imgs/vu-meter2.png);
+   background-image: url(./imgs/vu-meter.png);
    margin: 0 auto;
    background-size: contain;
 }

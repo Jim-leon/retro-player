@@ -1,4 +1,4 @@
-const THEME = "70s";
+const THEME = "retro";
 const VU_METERS = "analogue";
 const CHAR_DIR = `theme/${THEME}/imgs/chars/medium/`;
 const DISPLAY_LENGTH = 30;
