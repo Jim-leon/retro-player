@@ -297,6 +297,18 @@ img {
    position: relative;
 }
 
+.pol {
+   opacity: 0;
+   position: absolute;
+   width: 8px;
+   height: 8px;
+   right: 21px;
+   top: 28px;
+   border-radius: 50%;
+   background-color: #ff0000;
+   box-shadow: #000 0 -1px 7px 1px, inset #600 0 -1px 9px, #f00 0 2px 12px;
+}
+
 .corners .top {
    top: 1vw;
 }

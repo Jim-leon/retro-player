@@ -255,6 +255,7 @@ function movement(meter, value) {
       style = window.getComputedStyle(document.body);
       deflection = parseInt(style.getPropertyValue("--deflection").replace("deg", ""));
    }
+   document.querySelector("#pol" + meter).style.opacity = value > 180 ? 1 : 0;
    document.querySelector("#pointer" + meter).style.WebkitTransform = `rotate(${(value / 255) * (Math.abs(deflection) * 2) + deflection}deg)`;
 }
 
