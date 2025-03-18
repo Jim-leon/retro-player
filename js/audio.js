@@ -7,7 +7,7 @@ const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 let audioElement = new Audio();
 let currentTrackIndex = 0;
 let tracks = [];
-let analyser, audioLoadOffest, style, deflection, audioSource, year;
+let analyser, style, deflection, audioSource, year;
 let trackPlaying = false;
 let balance = false;
 let volume = false;
@@ -66,17 +66,22 @@ function handleFiles(event) {
 
 function updatePlaylist() {
    playlist.innerHTML = "";
+   let lastTrack = 0;
    tracks.forEach((track, index) => {
       getId3Data(track);
-      const trackElement = document.createElement("div");
-      if (index == currentTrackIndex) trackElement.classList.add("selected");
-      trackElement.textContent = track.name;
-      trackElement.addEventListener("click", (event) => {
-         selectTrack(index);
-         updateCurrentTrack(event.target);
-         trackPlaying = true;
-      });
-      playlist.appendChild(trackElement);
+      setTimeout(() => {
+         const trackElement = document.createElement("div");
+         if (index == currentTrackIndex) trackElement.classList.add("selected");
+         if (lastTrack > parseInt(track.id3data.track)) playlist.append("-".repeat(30));
+         trackElement.textContent = track.name.replace(".mp3", "");
+         trackElement.addEventListener("click", (event) => {
+            selectTrack(index);
+            updateCurrentTrack(index);
+            trackPlaying = true;
+         });
+         lastTrack = parseInt(track.id3data.track);
+         playlist.appendChild(trackElement);
+      }, 100);
    });
    // selectTrack(0);
    setTimeout(() => {
@@ -90,24 +95,23 @@ function updatePlaylist() {
       displayArtist.innerHTML = renderText(centreText(album));
       displayAlbum.innerHTML = renderText(centreText(genre));
       displayMiscInfo.innerHTML = renderText(centreText(year));
-   }, 50);
+   }, 500);
 
    audioElement.volume = volumeSlider.slider("value") / 100;
 }
 
 function centreText(text) {
+   if (!text) return;
    const lpad = DISPLAY_LENGTH / 2 - text.length / 2;
    const rpad = DISPLAY_LENGTH - lpad + text.length;
    return `${" ".repeat(lpad)}${text}${" ".repeat(rpad)}`;
 }
 
 function updateCurrentTrack(newTrack) {
-   Array.from(playlist.children)
-      .filter((child) => child != newTrack)
-      .forEach((sibling) => {
-         sibling.classList.remove("selected");
-      });
-   newTrack.classList.add("selected");
+   Array.from(playlist.children).forEach((sibling, index) => {
+      if (newTrack == index) sibling.classList.add("selected");
+      else sibling.classList.remove("selected");
+   });
 }
 
 function selectTrack(index) {
@@ -135,14 +139,12 @@ function playTrack() {
    if (trackPlaying) {
       audioContext.resume().then(() => {
          audioElement.play();
-         startAnalyser();
       });
    } else {
-      const audioLoadStart = new Date();
       selectTrack(currentTrackIndex);
       trackPlaying = true;
       audioElement.play();
-      audioLoadOffest = (new Date() - audioLoadStart) / 1000;
+      audioElement.currentTime = 0;
       startAnalyser();
    }
 }
@@ -154,17 +156,21 @@ function pauseTrack() {
 function stopTrack() {
    audioElement.pause();
    audioElement.currentTime = 0;
+   trackPlaying = false;
 }
 
 function nextTrack() {
    currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
-   updateCurrentTrack(tracks[currentTrackIndex]);
+   updateCurrentTrack(currentTrackIndex);
    loadTrack();
+   audioElement.play();
 }
 
 function prevTrack() {
    currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length;
+   updateCurrentTrack(currentTrackIndex);
    loadTrack();
+   audioElement.play();
 }
 
 function formatTime(seconds) {
@@ -200,7 +206,6 @@ function startAnalyser() {
       }
       requestAnimationFrame(updateVU);
    }
-
    updateVU();
 }
 
@@ -310,7 +315,8 @@ function initSliders() {
 }
 
 function renderText(msg) {
-   let d = "";
+   if (!msg) msg = "-".repeat(DISPLAY_LENGTH);
+   let disp = "";
    msg = msg.replace(/\, /g, ",");
    for (let e = 0; e < DISPLAY_LENGTH; e++) {
       if (e < msg.length)
@@ -321,87 +327,114 @@ function renderText(msg) {
             switch (text.charCodeAt(0)) {
                case 0:
                case 32:
-                  (text = "space-comma"), (textCase = "upper"), (f = true);
+                  text = "space-comma";
+                  textCase = "upper";
+                  f = true;
                   break;
                case 44:
-                  (text = "space-comma"), (textCase = "lower");
+                  text = "space-comma";
+                  textCase = "lower";
                   break;
                case 63:
-                  (text = "question-exclamation"), (textCase = "upper");
+                  text = "question-exclamation";
+                  textCase = "upper";
                   break;
                case 33:
-                  (text = "question-exclamation"), (textCase = "lower");
+                  text = "question-exclamation";
+                  textCase = "lower";
                   break;
                case 42:
-                  (text = "hash-star"), (textCase = "lower");
+                  text = "hash-star";
+                  textCase = "lower";
                   break;
                case 35:
-                  (text = "hash-star"), (textCase = "upper");
+                  text = "hash-star";
+                  textCase = "upper";
                   break;
                case 38:
-                  (text = "amp-period"), (textCase = "upper");
+                  text = "amp-period";
+                  textCase = "upper";
                   break;
                case 46:
-                  (text = "amp-period"), (textCase = "lower");
+                  text = "amp-period";
+                  textCase = "lower";
                   break;
                case 64:
-                  (text = "at-dollar"), (textCase = "upper");
+                  text = "at-dollar";
+                  textCase = "upper";
                   break;
                case 36:
-                  (text = "at-dollar"), (textCase = "lower");
+                  text = "at-dollar";
+                  textCase = "lower";
                   break;
                case 163:
-                  (text = "yen-pound"), (textCase = "lower");
+                  text = "yen-pound";
+                  textCase = "lower";
                   break;
                case 34:
-                  (text = "quote-apost"), (textCase = "upper");
+                  text = "quote-apost";
+                  textCase = "upper";
                   break;
                case 39:
-                  (text = "quote-apost"), (textCase = "lower");
+                  text = "quote-apost";
+                  textCase = "lower";
                   break;
                case 58:
-                  (text = "colon-semicolon"), (textCase = "upper");
+                  text = "colon-semicolon";
+                  textCase = "upper";
                   break;
                case 59:
-                  (text = "colon-semicolon"), (textCase = "lower");
+                  text = "colon-semicolon";
+                  textCase = "lower";
                   break;
                case 45:
-                  (text = "dash-slash"), (textCase = "upper");
+                  text = "dash-slash";
+                  textCase = "upper";
                   break;
                case 47:
-                  (text = "dash-slash"), (textCase = "lower");
+                  text = "dash-slash";
+                  textCase = "lower";
                   break;
                case 124:
-                  (text = "bar-dblbar"), (textCase = "upper");
+                  text = "bar-dblbar";
+                  textCase = "upper";
                   break;
                case 94:
-                  (text = "bar-dblbar"), (textCase = "lower");
+                  text = "bar-dblbar";
+                  textCase = "lower";
                   break;
                case 40:
                case 60:
                case 91:
                case 123:
-                  (text = "bracket"), (textCase = "upper");
+                  text = "bracket";
+                  textCase = "upper";
                   break;
                case 41:
                case 62:
                case 93:
                case 125:
-                  (text = "bracket"), (textCase = "lower");
+                  text = "bracket";
+                  textCase = "lower";
                   break;
                case 194:
-                  (text = ""), (textCase = "");
+                  text = "";
+                  textCase = "";
             }
          }
-      else (text = "space-comma"), (textCase = "upper"), (f = true);
+      else {
+         text = "space-comma";
+         textCase = "upper";
+         f = true;
+      }
       if (text && textCase) {
          const g = f ? "space" : "";
-         d += `<div style="background:url(${CHAR_DIR}${text.toLowerCase()}.jpg)" class="${textCase}">
+         disp += `<div style="background:url(${CHAR_DIR}${text.toLowerCase()}.jpg)" class="${textCase}">
                   <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=" class="mask ${g}" />
                </div>`;
       }
    }
-   return d;
+   return disp;
 }
 
 function timertime() {
@@ -415,7 +448,7 @@ function timertime() {
       const blink = secs % 2 ? " " : "-";
       const time = `${hours}${blink}${mins}${blink}${secs}`;
       displayMiscInfo.innerHTML = renderText(`${yr}      ${time}     ${getVolume()}`);
-   } else displayMiscInfo.innerHTML = renderText(`${yr}    ${formatTime(audioContext.currentTime)}/${formatTime(audioElement.duration)}    ${getVolume()}`);
+   } else displayMiscInfo.innerHTML = renderText(`${yr}    ${formatTime(audioElement.currentTime)}/${formatTime(audioElement.duration)}    ${getVolume()}`);
    mask();
 }
 
