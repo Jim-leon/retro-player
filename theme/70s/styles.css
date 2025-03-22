@@ -86,22 +86,29 @@ img {
    height: 15px !important;
 }
 
+.controls-container .wrapper {
+   display: flex;
+   justify-content: space-between;
+}
+
 .controls-container .wrapper .img {
    width: 61px;
    height: 90px;
    left: -9px;
    top: 5px;
    margin: 5px auto;
-   background-image: url(./imgs/control.png);
+   background-image: url(./imgs/controls.png);
    position: relative;
    opacity: 0.8;
+   background-color: transparent;
+   border: none;
 }
 
 .controls-container .img.select-song {
    background-position: 0 0;
 }
 
-.controls-container .img.halt {
+.controls-container .img.stop {
    background-position: -61px 0;
 }
 
@@ -113,27 +120,50 @@ img {
    background-position: -183px 0;
 }
 
-.controls-container .img.play {
+.controls-container .img.playpause {
    background-position: -244px 0;
 }
 
-.controls-container .img.pause {
+.controls-container .img.playpause {
+   background-position: -244px 0;
+}
+
+.controls-container .img.playpause {
+   background-position: -244px 0;
+}
+
+.controls-container .img.rew {
    background-position: -305px 0;
 }
 
-.controls-container .wrapper .img:hover {
-   opacity: 1;
-   cursor: pointer;
+.controls-container .img.ff {
+   background-position: -366px 0;
 }
 
-.controls-container .wrapper .img:active {
-   /* position: relative;
-   top: 6px; */
-   opacity: 1;
+.controls-container .img:after,
+.controls-container .img.playpause:after {
+   content: "";
+   position: absolute;
+   width: 40px;
+   height: 40px;
+   border-radius: 50%;
+   background-color: transparent;
+   bottom: 12px;
+   left: 12px;
+   border: 3px solid;
+   transition: all 0.3s ease-out;
 }
 
-.controls-container .wrapper .img:focus {
-   /* border: 1px solid #ff0; */
+.controls-container .img:hover:after,
+.controls-container .img.playpause.pause:after {
+   border-color: rgb(236, 199, 199);
+   opacity: 0.7;
+}
+
+.controls-container .img:active:after,
+.controls-container .img.playpause.play:after {
+   border-color: rgb(159, 4, 4);
+   opacity: 1;
 }
 
 .levels-container .label {

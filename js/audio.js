@@ -1,18 +1,9 @@
-const THEME = "retro";
+const THEME = "70s";
 const VU_METERS = "analogue";
 const CHAR_DIR = `theme/${THEME}/imgs/chars/medium/`;
-const DISPLAY_LENGTH = 30;
+const DISPLAY_WIDTH = 30;
 
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-let audioElement = new Audio();
-let currentTrackIndex = 0;
-let tracks = [];
-let analyser, style, deflection, audioSource, year;
-let trackPlaying = false;
-let balance = false;
-let volume = false;
-let brightness = 0.25;
-
 const leftLevelElement = document.getElementById("leftLevel");
 const rightLevelElement = document.getElementById("rightLevel");
 const stereoNode = new StereoPannerNode(audioContext, { pan: 0 });
@@ -27,16 +18,27 @@ const volumeSlider = $(".volume-slider");
 const balanceSlider = $(".balance-slider");
 const brightnessSlider = $(".brightness-slider");
 
+let audioElement = new Audio();
+let currentTrackIndex = 0;
+let currentTime = 0;
+let tracks = [];
+let audioBuffer, sourceNode, analyser, style, deflection, audioSource, year;
+let trackPlaying = false;
+let balance = false;
+let volume = false;
+let brightness = 0.25;
+
 document.getElementById("pointer1").src = document.getElementById("pointer2").src = `theme/${THEME}/imgs/needle.png`;
 document.getElementById("theme").href = `theme/${THEME}/styles.css`;
 document.getElementById("logo").src = `theme/${THEME}/imgs/logo.png`;
 document.getElementById("select-song").addEventListener("click", triggerFiles);
 document.getElementById("fileInput").addEventListener("change", handleFiles);
-document.getElementById("pauseBtn").addEventListener("click", pauseTrack);
-document.getElementById("playBtn").addEventListener("click", playTrack);
+document.getElementById("playPauseBtn").addEventListener("click", playTrack);
 document.getElementById("stopBtn").addEventListener("click", stopTrack);
 document.getElementById("nextBtn").addEventListener("click", nextTrack);
 document.getElementById("prevBtn").addEventListener("click", prevTrack);
+document.getElementById("ffBtn").addEventListener("click", fastForward);
+document.getElementById("rewBtn").addEventListener("click", rewind);
 
 document.addEventListener("DOMContentLoaded", () => {
    style = window.getComputedStyle(document.body);
@@ -57,8 +59,6 @@ function triggerFiles() {
 
 function handleFiles(event) {
    const loadedFiles = event.target.files;
-   console.log(loadedFiles);
-
    tracks = [];
    tracks = Array.from(loadedFiles).filter((file) => file.type === "audio/mpeg");
    if (tracks.length) updatePlaylist();
@@ -81,12 +81,12 @@ function updatePlaylist() {
          });
          lastTrack = parseInt(track.id3data.track);
          playlist.appendChild(trackElement);
-      }, 100);
+      }, 200);
    });
-   // selectTrack(0);
+
    setTimeout(() => {
       const trackData = tracks[0].id3data;
-      showCoverArt(trackData);
+
       const artist = trackData.artist;
       const album = trackData.album;
       const genre = trackData.genre;
@@ -95,6 +95,7 @@ function updatePlaylist() {
       displayArtist.innerHTML = renderText(centreText(album));
       displayAlbum.innerHTML = renderText(centreText(genre));
       displayMiscInfo.innerHTML = renderText(centreText(year));
+      showCoverArt(trackData);
    }, 500);
 
    audioElement.volume = volumeSlider.slider("value") / 100;
@@ -102,12 +103,13 @@ function updatePlaylist() {
 
 function centreText(text) {
    if (!text) return;
-   const lpad = DISPLAY_LENGTH / 2 - text.length / 2;
-   const rpad = DISPLAY_LENGTH - lpad + text.length;
+   const lpad = DISPLAY_WIDTH / 2 - text.length / 2;
+   const rpad = DISPLAY_WIDTH - lpad + text.length;
    return `${" ".repeat(lpad)}${text}${" ".repeat(rpad)}`;
 }
 
 function updateCurrentTrack(newTrack) {
+   showCoverArt(newTrack);
    Array.from(playlist.children).forEach((sibling, index) => {
       if (newTrack == index) sibling.classList.add("selected");
       else sibling.classList.remove("selected");
@@ -123,7 +125,6 @@ function loadTrack() {
    if (tracks.length === 0) return;
    const track = tracks[currentTrackIndex];
    audioElement.src = URL.createObjectURL(track);
-
    audioElement.load();
    audioElement.addEventListener("loadedmetadata", () => {
       displayTrkSong.innerHTML = renderText(`${track.id3data.track} ${track.id3data.title}`);
@@ -173,6 +174,24 @@ function prevTrack() {
    audioElement.play();
 }
 
+// Jump forward
+function fastForward() {
+   currentTime += 10;
+   if (currentTime >= audioBuffer.duration) {
+      currentTime = audioBuffer.duration; // Prevent going beyond the end
+   }
+   playAudio();
+}
+
+// Jump backward
+function rewind() {
+   currentTime -= 10;
+   if (currentTime < 0) {
+      currentTime = 0; // Prevent going before the start
+   }
+   playAudio();
+}
+
 function formatTime(seconds) {
    const minutes = Math.floor(seconds / 60);
    const secs = Math.floor(seconds % 60);
@@ -212,9 +231,9 @@ function startAnalyser() {
 function initDisplay() {
    screen.style.backgroundImage = "url(data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=)";
    mask();
-   displayTrkSong.innerHTML = renderText("-".repeat(DISPLAY_LENGTH));
-   displayArtist.innerHTML = renderText("-".repeat(DISPLAY_LENGTH));
-   displayAlbum.innerHTML = renderText("-".repeat(DISPLAY_LENGTH));
+   displayTrkSong.innerHTML = renderText("-".repeat(DISPLAY_WIDTH));
+   displayArtist.innerHTML = renderText("-".repeat(DISPLAY_WIDTH));
+   displayAlbum.innerHTML = renderText("-".repeat(DISPLAY_WIDTH));
    displayMiscInfo.innerHTML = renderText(`---- -----------      ${getVolume()}`);
 }
 
@@ -316,10 +335,10 @@ function initSliders() {
 }
 
 function renderText(msg) {
-   if (!msg) msg = "-".repeat(DISPLAY_LENGTH);
+   if (!msg) msg = "-".repeat(DISPLAY_WIDTH);
    let disp = "";
    msg = msg.replace(/\, /g, ",");
-   for (let e = 0; e < DISPLAY_LENGTH; e++) {
+   for (let e = 0; e < DISPLAY_WIDTH; e++) {
       if (e < msg.length)
          if (((text = msg.charAt(e)), (textCase = text === text.toUpperCase() ? "upper" : "lower"), $.isNumeric(text)))
             (textCase = text % 2 == 0 ? "upper" : "lower"), (text = 2 * parseInt(text / 2)), (text = text.toString() + (text + 1).toString());
@@ -475,13 +494,36 @@ function getId3Data(track) {
    });
 }
 
-function showCoverArt(data) {
-   if (data?.picture) {
-      coverData = data.picture;
+function showCoverArt(track) {
+   if (track.picture) {
+      const coverData = track.picture;
       let coverArt = "";
-      for (dataBlock = 0; dataBlock < coverData.data.length; dataBlock++) {
-         coverArt += String.fromCharCode(coverData.data[dataBlock]);
-      }
+      for (dataBlock = 0; dataBlock < coverData.data.length; dataBlock++) coverArt += String.fromCharCode(coverData.data[dataBlock]);
       screen.style.backgroundImage = `url(data:${coverData.format};base64,${window.btoa(coverArt)})`;
    } else screen.style.backgroundImage = "url(data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=)";
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////
+
+// Create an AudioContext
+// let audioBuffer;
+// let sourceNode;
+// let currentTime = 0;
+
+// // Load audio file
+// async function loadAudio(url) {
+//    const response = await fetch(url);
+//    const arrayBuffer = await response.arrayBuffer();
+//    audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+// }
+
+// // Play audio
+// function playAudio() {
+//    if (sourceNode) {
+//       sourceNode.stop();
+//    }
+//    sourceNode = audioContext.createBufferSource();
+//    sourceNode.buffer = audioBuffer;
+//    sourceNode.connect(audioContext.destination);
+//    sourceNode.start(0, currentTime);
+// }

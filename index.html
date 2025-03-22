@@ -2,9 +2,6 @@
 <html xmlns="http://www.w3.org/1999/html">
    <head>
       <title>Retro Player</title>
-      <script src="js/jsmediatags.min.js"></script>
-      <script src="js/jquery-2.2.4.min.js"></script>
-      <script src="js/jquery-ui.min.js"></script>
 
       <link rel="stylesheet" href="theme/common/bootstrap.min.css" type="text/css" />
       <link rel="stylesheet" id="theme" type="text/css" />
@@ -92,31 +89,17 @@
                </div>
                <div class="controls-container">
                   <div class="wrapper">
-                     <div class="col-md-2 col-xs-4">
-                        <div id="stopBtn" class="img halt" title="Stop Song"></div>
-                     </div>
-                     <div class="col-md-2 col-xs-4">
-                        <div id="prevBtn" class="img prev" title="Previous Song"></div>
-                     </div>
-                     <div class="col-md-2 col-xs-4">
-                        <div id="playBtn" class="img play" title="Play Song"></div>
-                     </div>
-                     <div class="col-md-2 col-xs-4">
-                        <div id="pauseBtn" class="img pause" title="Pause Song"></div>
-                     </div>
-                     <div class="col-md-2 col-xs-4">
-                        <div id="nextBtn" class="img next" title="Next Song"></div>
-                     </div>
-                     <div class="select col-md-2 col-xs-4">
-                        <form>
-                           <div class="select-song">
-                              <label for="file" style="width: 100%">
-                                 <div alt="Load Song" id="select-song" class="img select-song active" title="Load Song"></div>
-                              </label>
-                              <input type="file" class="hidden" accept=".mp3" id="fileInput" multiple webkitdirectory />
-                           </div>
-                        </form>
-                     </div>
+                     <button id="stopBtn" class="img stop" title="Stop Song"></button>
+                     <button id="prevBtn" class="img prev" title="Previous Song"></button>
+                     <button id="rewBtn" class="img rew" title="Rewind Song"></button>
+                     <button id="playPauseBtn" class="img playpause" title="Play/Pause Song"></button>
+                     <button id="ffBtn" class="img ff" title="Fast Forward Song"></button>
+                     <button id="nextBtn" class="img next" title="Next Song"></button>
+                     <button id="select-song" class="img select-song" title="Load Song"></button>
+
+                     <form>
+                        <input type="file" class="hidden" accept=".mp3" id="fileInput" multiple webkitdirectory />
+                     </form>
                   </div>
                </div>
                <div class="levels-container">
@@ -152,6 +135,9 @@
             </div>
          </div>
       </div>
+      <script src="js/jsmediatags.min.js"></script>
+      <script src="js/jquery-2.2.4.min.js"></script>
+      <script src="js/jquery-ui.min.js"></script>
       <script src="js/audio.js"></script>
    </body>
 </html>
