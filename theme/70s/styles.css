@@ -256,10 +256,14 @@ img {
 
 #playlist div {
    cursor: pointer;
-   padding-left: 10px;
 }
 #playlist div.selected {
    background: cornflowerblue;
+}
+
+.disk-label {
+   text-decoration: underline;
+   padding: 0.5rem 0;
 }
 
 .screen-wrapper:hover #playlist {

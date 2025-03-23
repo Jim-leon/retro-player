@@ -24,6 +24,7 @@ let currentTime = 0;
 let tracks = [];
 let audioBuffer, sourceNode, analyser, style, deflection, audioSource, year;
 let trackPlaying = false;
+let albumLoaded = false;
 let balance = false;
 let volume = false;
 let brightness = 0.25;
@@ -61,43 +62,60 @@ function handleFiles(event) {
    const loadedFiles = event.target.files;
    tracks = [];
    tracks = Array.from(loadedFiles).filter((file) => file.type === "audio/mpeg");
-   if (tracks.length) updatePlaylist();
+   tracks.forEach((track) => {
+      getId3Data(track);
+   });
+   setTimeout(() => {
+      tracks.sort(function (a, b) {
+         if (a.id3data.TALB.data < b.id3data.TALB.data) return -1;
+         if (a.id3data.TALB.data > b.id3data.TALB.data) return 1;
+         if (a.id3data.TALB.track > b.id3data.TALB.track) return 1;
+         if (a.id3data.TALB.track < b.id3data.TALB.track) return -1;
+      });
+      if (tracks.length) updatePlaylist();
+   }, 500);
 }
 
 function updatePlaylist() {
-   playlist.innerHTML = "";
+   let disk = 1;
    let lastTrack = 0;
+   let diskLabel = `<div class="disk-label">Disk 1</div>`;
+   let diskLabelAdded = false;
+   albumLoaded = true;
+   playlist.innerHTML = "";
    tracks.forEach((track, index) => {
-      getId3Data(track);
-      setTimeout(() => {
-         const trackElement = document.createElement("div");
-         if (index == currentTrackIndex) trackElement.classList.add("selected");
-         if (lastTrack > parseInt(track.id3data.track)) playlist.append("-".repeat(30));
-         trackElement.textContent = track.name.replace(".mp3", "");
-         trackElement.addEventListener("click", (event) => {
-            selectTrack(index);
-            updateCurrentTrack(index);
-            trackPlaying = true;
-         });
-         lastTrack = parseInt(track.id3data.track);
-         playlist.appendChild(trackElement);
-      }, 200);
+      const trackElement = document.createElement("div");
+      trackElement.dataset.track = index;
+      trackElement.textContent = track.id3data.track + " - " + track.id3data.title;
+      trackElement.addEventListener("click", (event) => {
+         selectTrack(event.target.dataset.track);
+         updateCurrentTrack(event.target.dataset.track);
+         trackPlaying = true;
+      });
+      if (index == currentTrackIndex) trackElement.classList.add("selected");
+      if (lastTrack > parseInt(track.id3data.track)) {
+         if (!diskLabelAdded) {
+            playlist.insertAdjacentHTML("afterbegin", diskLabel);
+            diskLabelAdded = true;
+         }
+         disk++;
+         playlist.insertAdjacentHTML("beforeend", diskLabel.replace("1", disk));
+      }
+      lastTrack = parseInt(track.id3data.track);
+      playlist.appendChild(trackElement);
    });
 
-   setTimeout(() => {
-      const trackData = tracks[0].id3data;
+   const trackData = tracks[0].id3data;
+   const artist = trackData.artist;
+   const album = trackData.album;
+   const genre = trackData.genre;
+   year = trackData.year || trackData.TDRC.data;
+   displayTrkSong.innerHTML = renderText(centreText(artist.toUpperCase()));
+   displayArtist.innerHTML = renderText(centreText(album.toUpperCase()));
+   displayAlbum.innerHTML = renderText(centreText(genre.toUpperCase()));
+   displayMiscInfo.innerHTML = renderText(centreText(year));
 
-      const artist = trackData.artist;
-      const album = trackData.album;
-      const genre = trackData.genre;
-      year = trackData.year || trackData.TDRC.data;
-      displayTrkSong.innerHTML = renderText(centreText(artist));
-      displayArtist.innerHTML = renderText(centreText(album));
-      displayAlbum.innerHTML = renderText(centreText(genre));
-      displayMiscInfo.innerHTML = renderText(centreText(year));
-      showCoverArt(trackData);
-   }, 500);
-
+   showCoverArt(trackData);
    audioElement.volume = volumeSlider.slider("value") / 100;
 }
 
@@ -110,8 +128,8 @@ function centreText(text) {
 
 function updateCurrentTrack(newTrack) {
    showCoverArt(newTrack);
-   Array.from(playlist.children).forEach((sibling, index) => {
-      if (newTrack == index) sibling.classList.add("selected");
+   Array.from(playlist.children).forEach((sibling) => {
+      if (newTrack == sibling.dataset.track) sibling.classList.add("selected");
       else sibling.classList.remove("selected");
    });
 }
@@ -458,9 +476,11 @@ function renderText(msg) {
 }
 
 function timertime() {
-   if (balance || volume) return true;
+   if (balance || volume || albumLoaded) return true;
    const yr = year ? year : "----";
-   if (!trackPlaying) {
+   if (trackPlaying)
+      displayMiscInfo.innerHTML = renderText(`${yr}    ${formatTime(audioElement.currentTime)}/${formatTime(audioElement.duration)}    ${getVolume()}`);
+   else {
       const date = new Date();
       const hours = String(date.getHours()).padStart(2, "0");
       const mins = String(date.getMinutes()).padStart(2, "0");
@@ -468,7 +488,7 @@ function timertime() {
       const blink = secs % 2 ? " " : "-";
       const time = `${hours}${blink}${mins}${blink}${secs}`;
       displayMiscInfo.innerHTML = renderText(`${yr}      ${time}     ${getVolume()}`);
-   } else displayMiscInfo.innerHTML = renderText(`${yr}    ${formatTime(audioElement.currentTime)}/${formatTime(audioElement.duration)}    ${getVolume()}`);
+   }
    mask();
 }
 
