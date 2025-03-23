@@ -19,7 +19,7 @@ const balanceSlider = $(".balance-slider");
 const brightnessSlider = $(".brightness-slider");
 
 let audioElement = new Audio();
-let currentTrackIndex = 0;
+let currentTrackIndex = -1;
 let currentTime = 0;
 let tracks = [];
 let audioBuffer, sourceNode, analyser, style, deflection, audioSource, year;
@@ -158,6 +158,7 @@ function playTrack() {
    if (trackPlaying) {
       audioContext.resume().then(() => {
          audioElement.play();
+         startAnalyser();
       });
    } else {
       selectTrack(currentTrackIndex);
@@ -194,20 +195,18 @@ function prevTrack() {
 
 // Jump forward
 function fastForward() {
-   currentTime += 10;
-   if (currentTime >= audioBuffer.duration) {
-      currentTime = audioBuffer.duration; // Prevent going beyond the end
+   audioElement.currentTime += 10;
+   if (audioElement.currentTime >= audioElement.duration) {
+      audioElement.currentTime = audioElement.duration; // Prevent going beyond the end
    }
-   playAudio();
 }
 
 // Jump backward
 function rewind() {
-   currentTime -= 10;
-   if (currentTime < 0) {
-      currentTime = 0; // Prevent going before the start
+   audioElement.currentTime -= 10;
+   if (audioElement.currentTime < 0) {
+      audioElement.currentTime = 0; // Prevent going before the start
    }
-   playAudio();
 }
 
 function formatTime(seconds) {
@@ -224,7 +223,6 @@ function startAnalyser() {
       analyser.connect(audioContext.destination);
       audioSource.connect(stereoNode).connect(audioContext.destination);
    }
-
    analyser.fftSize = 2048;
    const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
@@ -476,7 +474,7 @@ function renderText(msg) {
 }
 
 function timertime() {
-   if (balance || volume || albumLoaded) return true;
+   if (balance || volume) return true;
    const yr = year ? year : "----";
    if (trackPlaying)
       displayMiscInfo.innerHTML = renderText(`${yr}    ${formatTime(audioElement.currentTime)}/${formatTime(audioElement.duration)}    ${getVolume()}`);
@@ -522,28 +520,3 @@ function showCoverArt(track) {
       screen.style.backgroundImage = `url(data:${coverData.format};base64,${window.btoa(coverArt)})`;
    } else screen.style.backgroundImage = "url(data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=)";
 }
-
-////////////////////////////////////////////////////////////////////////////////////////////
-
-// Create an AudioContext
-// let audioBuffer;
-// let sourceNode;
-// let currentTime = 0;
-
-// // Load audio file
-// async function loadAudio(url) {
-//    const response = await fetch(url);
-//    const arrayBuffer = await response.arrayBuffer();
-//    audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-// }
-
-// // Play audio
-// function playAudio() {
-//    if (sourceNode) {
-//       sourceNode.stop();
-//    }
-//    sourceNode = audioContext.createBufferSource();
-//    sourceNode.buffer = audioBuffer;
-//    sourceNode.connect(audioContext.destination);
-//    sourceNode.start(0, currentTime);
-// }
