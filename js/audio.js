@@ -1,5 +1,7 @@
 const THEME = "70s";
 const VU_METERS = "analogue";
+const USE_CAPS = true;
+
 const CHAR_DIR = `theme/${THEME}/imgs/chars/medium/`;
 const DISPLAY_WIDTH = 30;
 
@@ -110,13 +112,17 @@ function updatePlaylist() {
    const album = trackData.album;
    const genre = trackData.genre;
    year = trackData.year || trackData.TDRC.data;
-   displayTrkSong.innerHTML = renderText(centreText(artist.toUpperCase()));
-   displayArtist.innerHTML = renderText(centreText(album.toUpperCase()));
-   displayAlbum.innerHTML = renderText(centreText(genre.toUpperCase()));
+   displayTrkSong.innerHTML = renderText(centreText(useCaps(artist)));
+   displayArtist.innerHTML = renderText(centreText(useCaps(album)));
+   displayAlbum.innerHTML = renderText(centreText(useCaps(genre)));
    displayMiscInfo.innerHTML = renderText(centreText(year));
 
    showCoverArt(trackData);
    audioElement.volume = volumeSlider.slider("value") / 100;
+}
+
+function useCaps(text) {
+   return USE_CAPS ? text.toUpperCase() : text;
 }
 
 function centreText(text) {
@@ -127,7 +133,7 @@ function centreText(text) {
 }
 
 function updateCurrentTrack(newTrack) {
-   showCoverArt(newTrack);
+   showCoverArt(tracks[newTrack].id3data);
    Array.from(playlist.children).forEach((sibling) => {
       if (newTrack == sibling.dataset.track) sibling.classList.add("selected");
       else sibling.classList.remove("selected");
@@ -145,9 +151,9 @@ function loadTrack() {
    audioElement.src = URL.createObjectURL(track);
    audioElement.load();
    audioElement.addEventListener("loadedmetadata", () => {
-      displayTrkSong.innerHTML = renderText(`${track.id3data.track} ${track.id3data.title}`);
-      displayArtist.innerHTML = renderText(track.id3data.artist);
-      displayAlbum.innerHTML = renderText(track.id3data.album);
+      displayTrkSong.innerHTML = renderText(`${track.id3data.track} ${useCaps(track.id3data.title)}`);
+      displayArtist.innerHTML = renderText(useCaps(track.id3data.artist));
+      displayAlbum.innerHTML = renderText(useCaps(track.id3data.album));
       audioElement.volume = volumeSlider.slider("value") / 100;
       displayMiscInfo.innerHTML = renderText(`${year}    00:00/${formatTime(audioElement.duration)}    ${getVolume()}`);
    });
