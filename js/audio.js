@@ -29,6 +29,7 @@ let trackPlaying = false;
 let albumLoaded = false;
 let balance = false;
 let volume = false;
+let compilation = false;
 let brightness = 0.25;
 
 document.getElementById("pointer1").src = document.getElementById("pointer2").src = `theme/${THEME}/imgs/needle.png`;
@@ -64,21 +65,114 @@ function handleFiles(event) {
    const loadedFiles = event.target.files;
    tracks = [];
    tracks = Array.from(loadedFiles).filter((file) => file.type === "audio/mpeg");
+   const folderDepth = tracks[0].webkitRelativePath.split("/").length;
    tracks.forEach((track) => {
       getId3Data(track);
    });
+
    setTimeout(() => {
+      addMockID3Data(tracks);
       tracks.sort(function (a, b) {
-         if (a.id3data.TALB.data < b.id3data.TALB.data) return -1;
-         if (a.id3data.TALB.data > b.id3data.TALB.data) return 1;
-         if (a.id3data.TALB.track > b.id3data.TALB.track) return 1;
-         if (a.id3data.TALB.track < b.id3data.TALB.track) return -1;
+         if (folderDepth > 2) {
+            if (a.id3data.album < b.id3data.album) return -1;
+            if (a.id3data.album > b.id3data.album) return 1;
+         }
+         if (a.id3data.track > b.id3data.track) return 1;
+         if (a.id3data.track < b.id3data.track) return -1;
       });
       if (tracks.length) updatePlaylist();
    }, 500);
 }
 
+function addMockID3Data(tracks) {
+   tracks.forEach((track, index) => {
+      if (!track.id3data.TRCK?.data && track.id3data.track) {
+         track.id3data.TRCK = {};
+         track.id3data.TRCK.data = zeroPad(track.id3data.track.split("/")[0]);
+      } else if (track.id3data.TRCK?.data && !track.id3data.track) {
+         track.id3data.track = zeroPad(track.id3data.TRCK.data.split("/")[0]);
+      } else {
+         track.id3data.TRCK = {};
+         track.id3data.TRCK.data = zeroPad(index + 1);
+         track.id3data.track = zeroPad(index + 1);
+      }
+
+      if (track.id3data.artist && !track.id3data.TPE1?.data) {
+         track.id3data.TPE1 = {};
+         track.id3data.TPE1.data = track.id3data.artist;
+      } else if (!track.id3data.artist && track.id3data.TPE1?.data) {
+         track.id3data.artist = track.id3data.TPE1.data;
+      } else if (!track.id3data.artist && !track.id3data.TPE1?.data) {
+         const tempData = track.name.split(/[^ A-Za-z]/);
+         track.id3data.TPE1 = {};
+         track.id3data.TPE1.data = track.id3data.artist;
+         track.id3data.artist = tempData[0].trim();
+      }
+
+      if (track.id3data.title && !track.id3data.TIT2?.data) {
+         track.id3data.TIT2 = {};
+         track.id3data.TIT2.data = track.id3data.title;
+      } else if (!track.id3data.title && track.id3data.TIT2?.data) {
+         track.id3data.title = track.id3data.TIT2.data;
+      } else if (!track.id3data.title && !track.id3data.TIT2?.data) {
+         const tempData = track.name.split(/[^ A-Za-z]/);
+         track.id3data.title = tempData[1].trim();
+      }
+
+      if (track.id3data.album && !track.id3data.TALB?.data) {
+         track.id3data.TALB = {};
+         track.id3data.TALB.data = track.id3data.album;
+      } else if (!track.id3data.album && track.id3data.TALB?.data) {
+         track.id3data.album = track.id3data.TALB.data;
+      } else if (!track.id3data.album && !track.id3data.TALB?.data) {
+         track.id3data.album = "Unknown";
+         track.id3data.TALB = {};
+         track.id3data.TALB.data = 1;
+      }
+
+      if (track.id3data.year && !track.id3data.TYER?.data) {
+         track.id3data.TYER = {};
+         track.id3data.TYER.data = track.id3data.year;
+      } else if (!track.id3data.year && track.id3data.TYER?.data) {
+         track.id3data.year = track.id3data.TYER.data;
+      } else if (!track.id3data.year && !track.id3data.TYER?.data) {
+         track.id3data.year = "1999";
+         track.id3data.TYER = {};
+         track.id3data.TYER.data = "1999";
+      }
+
+      if (track.id3data.genre && !track.id3data.TCON?.data) {
+         track.id3data.TCON = {};
+         track.id3data.TCON.data = track.id3data.year;
+      } else if (!track.id3data.genre && track.id3data.TCON?.data) {
+         track.id3data.year = track.id3data.TCON.data;
+      } else if (!track.id3data.genre && !track.id3data.TCON?.data) {
+         track.id3data.genre = "Music";
+         track.id3data.TCON = {};
+         track.id3data.TYER.data = "Music";
+      }
+   });
+}
+
 function updatePlaylist() {
+   const trackData = tracks[0].id3data;
+   let artist = trackData.artist;
+   let album = trackData?.album;
+   let genre = trackData?.genre;
+   year = trackData?.year;
+
+   const trackData2 = tracks[1].id3data;
+   let artist2 = trackData2.artist;
+   let album2 = trackData2?.album;
+
+   if (artist !== artist2 && album !== album2) {
+      artist = "Various";
+      album = "Compilation";
+      genre = "Assorted";
+      year = "0000";
+      compilation = true;
+   }
+
    let disk = 1;
    let lastTrack = 0;
    let diskLabel = `<div class="disk-label">Disk 1</div>`;
@@ -88,7 +182,7 @@ function updatePlaylist() {
    tracks.forEach((track, index) => {
       const trackElement = document.createElement("div");
       trackElement.dataset.track = index;
-      trackElement.textContent = track.id3data.track + " - " + track.id3data.title;
+      trackElement.textContent = zeroPad(track.id3data.track.split("/")[0]) + " - " + track.id3data.title + (compilation ? " - " + track.id3data.artist : "");
       trackElement.addEventListener("click", (event) => {
          selectTrack(event.target.dataset.track);
          updateCurrentTrack(event.target.dataset.track);
@@ -107,11 +201,6 @@ function updatePlaylist() {
       playlist.appendChild(trackElement);
    });
 
-   const trackData = tracks[0].id3data;
-   const artist = trackData.artist;
-   const album = trackData.album;
-   const genre = trackData.genre;
-   year = trackData.year || trackData.TDRC.data;
    displayTrkSong.innerHTML = renderText(centreText(useCaps(artist)));
    displayArtist.innerHTML = renderText(centreText(useCaps(album)));
    displayAlbum.innerHTML = renderText(centreText(useCaps(genre)));
@@ -199,7 +288,6 @@ function prevTrack() {
    audioElement.play();
 }
 
-// Jump forward
 function fastForward() {
    audioElement.currentTime += 10;
    if (audioElement.currentTime >= audioElement.duration) {
@@ -207,7 +295,6 @@ function fastForward() {
    }
 }
 
-// Jump backward
 function rewind() {
    audioElement.currentTime -= 10;
    if (audioElement.currentTime < 0) {
@@ -218,7 +305,7 @@ function rewind() {
 function formatTime(seconds) {
    const minutes = Math.floor(seconds / 60);
    const secs = Math.floor(seconds % 60);
-   return `${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+   return `${zeroPad(minutes)}:${zeroPad(secs)}`;
 }
 
 function startAnalyser() {
@@ -359,7 +446,6 @@ function initSliders() {
 function renderText(msg) {
    if (!msg) msg = "-".repeat(DISPLAY_WIDTH);
    let disp = "";
-   msg = msg.replace(/\, /g, ",");
    for (let e = 0; e < DISPLAY_WIDTH; e++) {
       if (e < msg.length)
          if (((text = msg.charAt(e)), (textCase = text === text.toUpperCase() ? "upper" : "lower"), $.isNumeric(text)))
@@ -486,14 +572,18 @@ function timertime() {
       displayMiscInfo.innerHTML = renderText(`${yr}    ${formatTime(audioElement.currentTime)}/${formatTime(audioElement.duration)}    ${getVolume()}`);
    else {
       const date = new Date();
-      const hours = String(date.getHours()).padStart(2, "0");
-      const mins = String(date.getMinutes()).padStart(2, "0");
-      const secs = String(date.getSeconds()).padStart(2, "0");
+      const hours = zeroPad(date.getHours());
+      const mins = zeroPad(date.getMinutes());
+      const secs = zeroPad(date.getSeconds());
       const blink = secs % 2 ? " " : "-";
       const time = `${hours}${blink}${mins}${blink}${secs}`;
       displayMiscInfo.innerHTML = renderText(`${yr}      ${time}     ${getVolume()}`);
    }
    mask();
+}
+
+function zeroPad(num, pad = 2) {
+   return String(num).padStart(pad, "0");
 }
 
 function mask() {
@@ -504,7 +594,7 @@ function mask() {
 }
 
 function getVolume() {
-   return `Vol ${String(volumeSlider.slider("value")).padStart(3, "0")}`;
+   return `Vol ${zeroPad(volumeSlider.slider("value"), 3)}`;
 }
 
 function getId3Data(track) {
