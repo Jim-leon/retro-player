@@ -209,6 +209,10 @@ img {
    border: 3px inset #c9c9c9;
 }
 
+.logo {
+   width: 100%;
+}
+
 .controls-container,
 .levels-container,
 .meter-container,
@@ -289,9 +293,7 @@ img {
 
 .display-row > div {
    margin: 3px 10px;
-   float: left;
    display: inline-block;
-   border: 3px inset #c9c9c9;
 }
 
 #file {
@@ -301,7 +303,7 @@ img {
 .lower,
 .upper {
    width: 20px;
-   height: 32px;
+   height: 25px;
    float: left;
    margin: 0px;
 }

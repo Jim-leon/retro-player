@@ -282,6 +282,10 @@ img {
    padding: 15px 8px;
 }
 
+.analogue {
+   display: none;
+}
+
 .meter-container .label {
    margin: 4px auto;
    display: block !important;

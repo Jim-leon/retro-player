@@ -405,11 +405,15 @@ function initSliders() {
       value: 5,
       slide: function (a, b) {
          volume = true;
+         const volWidth = DISPLAY_WIDTH - 3;
          if (audioElement) audioElement.volume = b.value / 100;
-         a = Math.ceil(b.value * 0.27);
-         a = a > 27 ? 27 : a;
-         const volStr = "Vol" + (a != Math.round(b.value * 0.27) ? "^".repeat(a - 1) + "|" + " ".repeat(27 - a) : "^".repeat(a) + " ".repeat(27 - a));
+         a = Math.ceil((b.value * volWidth) / 100);
+         a = a > volWidth ? volWidth : a;
+         const volStr = `Vol${
+            a != Math.round((b.value * volWidth) / 100) ? "^".repeat(a - 1) + "|" + " ".repeat(27 - a) : "^".repeat(a) + " ".repeat(volWidth - a)
+         }`;
          displayMiscInfo.innerHTML = renderText(volStr);
+         mask();
       },
       stop: function (event, ui) {
          volume = false;
@@ -425,10 +429,12 @@ function initSliders() {
       step: 0.01,
       slide: function (a, b) {
          balance = true;
-         a = Math.ceil(parseInt(b.value * 14) + 14);
-         let balStr = "L" + "-".repeat(a) + "i" + "-".repeat(27 - a) + "R";
+         const balWidth = DISPLAY_WIDTH - 3;
+         a = Math.ceil(parseInt(b.value * (parseInt(balWidth / 2) + 1)) + (parseInt(balWidth / 2) + 1));
+         const balStr = "L" + "-".repeat(a) + "i" + "-".repeat(balWidth - a) + "R";
          displayMiscInfo.innerHTML = renderText(balStr);
          stereoNode.pan.value = b.value;
+         mask();
       },
       stop: function (event, ui) {
          balance = false;
@@ -450,17 +456,15 @@ function initSliders() {
 
 function renderText(msg) {
    // If no message is provided, create a default message of dashes
-   if (!msg) {
-      msg = "-".repeat(DISPLAY_WIDTH);
-   }
+   if (!msg) msg = "-".repeat(DISPLAY_WIDTH);
 
    let disp = ""; // This will hold the final output
 
    // Loop through each character position up to DISPLAY_WIDTH
    for (let charPos = 0; charPos < DISPLAY_WIDTH; charPos++) {
-      let text; // Variable to hold the current character
-      let textCase; // Variable to determine the case (upper/lower)
-      let isSpace = false; // Flag to indicate special cases
+      let text = ""; // Variable to hold the current character
+      let textCase = ""; // Variable to determine the case (upper/lower)
+      let isSpace = false; // Flag to icharacter is a space
 
       // Check if the current index is within the message length
       if (charPos < msg.length) {
@@ -477,7 +481,6 @@ function renderText(msg) {
          } else {
             // Handle special characters based on their char codes
             switch (text.charCodeAt(0)) {
-               case 0:
                case 32:
                   text = "space-comma";
                   textCase = "upper";
@@ -569,9 +572,6 @@ function renderText(msg) {
                   text = "bracket";
                   textCase = "lower";
                   break;
-               case 194:
-                  text = ""; // No text for this case
-                  textCase = "";
             }
          }
       } else {
@@ -583,9 +583,9 @@ function renderText(msg) {
 
       // If we have valid text and textCase, create the display element
       if (text && textCase) {
-         const maskClass = isSpace ? "space" : ""; // Determine if we need a space class
+         const maskClass = isSpace ? " space" : ""; // Determine if we need a space class
          disp += `<div style="background:url(${CHAR_DIR}${text.toLowerCase()}.jpg)" class="${textCase}">
-                       <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=" class="mask ${maskClass}" />
+                       <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=" class="mask${maskClass}" />
                     </div>`;
       }
    }
@@ -603,7 +603,7 @@ function timertime() {
       const hours = zeroPad(date.getHours());
       const mins = zeroPad(date.getMinutes());
       const secs = zeroPad(date.getSeconds());
-      const blink = secs % 2 ? " " : "-";
+      const blink = secs % 2 ? " " : ":";
       const time = `${hours}${blink}${mins}${blink}${secs}`;
       displayMiscInfo.innerHTML = renderText(`${yr}      ${time}     ${getVolume()}`);
    }
