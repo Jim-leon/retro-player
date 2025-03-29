@@ -1,5 +1,5 @@
-const THEME = "70s";
-const VU_METERS = "analogue";
+const THEME = "90s";
+const VU_METERS = "bargraph";
 const USE_CAPS = true;
 
 const CHAR_DIR = `theme/${THEME}/imgs/chars/medium/`;
@@ -47,7 +47,7 @@ document.getElementById("rewBtn").addEventListener("click", rewind);
 document.addEventListener("DOMContentLoaded", () => {
    style = window.getComputedStyle(document.body);
    deflection = parseInt(style.getPropertyValue("--deflection").replace("deg", ""));
-   setInterval(timertime, 1e2);
+   setInterval(timertime, 1000);
    initSliders();
    initDisplay();
    insertScrews();
@@ -65,18 +65,21 @@ function handleFiles(event) {
    const loadedFiles = event.target.files;
    tracks = [];
    tracks = Array.from(loadedFiles).filter((file) => file.type === "audio/mpeg");
-   const folderDepth = tracks[0].webkitRelativePath.split("/").length;
+   // If path like artist/cd 1/song.mp3 its multidisk
+   const multiDisk = tracks[0].webkitRelativePath.split("/").length > 2;
    tracks.forEach((track) => {
       getId3Data(track);
    });
 
    setTimeout(() => {
-      addMockID3Data(tracks);
+      processID3Data(tracks);
       tracks.sort(function (a, b) {
-         if (folderDepth > 2) {
+         // If multi disk sort by disk name first
+         if (multiDisk) {
             if (a.id3data.album < b.id3data.album) return -1;
             if (a.id3data.album > b.id3data.album) return 1;
          }
+         // Sort tracks by song id
          if (a.id3data.track > b.id3data.track) return 1;
          if (a.id3data.track < b.id3data.track) return -1;
       });
@@ -84,7 +87,7 @@ function handleFiles(event) {
    }, 500);
 }
 
-function addMockID3Data(tracks) {
+function processID3Data(tracks) {
    tracks.forEach((track, index) => {
       if (!track.id3data.TRCK?.data && track.id3data.track) {
          track.id3data.TRCK = {};
@@ -329,8 +332,10 @@ function startAnalyser() {
          movement(2, rightLevel);
       }
       if (VU_METERS == "bargraph") {
-         leftLevelElement.style.width = 100 - (leftLevel / 255) * 100 + "%";
-         rightLevelElement.style.width = 100 - (rightLevel / 255) * 100 + "%";
+         console.log(100 - (leftLevel / 255) * 100 + "%");
+
+         leftLevelElement.style.width = 100 - Math.round((leftLevel * (100 / 255)) / 8) * 8 + "%";
+         rightLevelElement.style.width = 100 - Math.round((rightLevel * (100 / 255)) / 8) * 8 + "%";
       }
       requestAnimationFrame(updateVU);
    }
@@ -444,20 +449,39 @@ function initSliders() {
 }
 
 function renderText(msg) {
-   if (!msg) msg = "-".repeat(DISPLAY_WIDTH);
-   let disp = "";
-   for (let e = 0; e < DISPLAY_WIDTH; e++) {
-      if (e < msg.length)
-         if (((text = msg.charAt(e)), (textCase = text === text.toUpperCase() ? "upper" : "lower"), $.isNumeric(text)))
-            (textCase = text % 2 == 0 ? "upper" : "lower"), (text = 2 * parseInt(text / 2)), (text = text.toString() + (text + 1).toString());
-         else {
-            f = false;
+   // If no message is provided, create a default message of dashes
+   if (!msg) {
+      msg = "-".repeat(DISPLAY_WIDTH);
+   }
+
+   let disp = ""; // This will hold the final output
+
+   // Loop through each character position up to DISPLAY_WIDTH
+   for (let charPos = 0; charPos < DISPLAY_WIDTH; charPos++) {
+      let text; // Variable to hold the current character
+      let textCase; // Variable to determine the case (upper/lower)
+      let isSpace = false; // Flag to indicate special cases
+
+      // Check if the current index is within the message length
+      if (charPos < msg.length) {
+         text = msg.charAt(charPos); // Get the character at the current index
+
+         // Determine if the character is uppercase or lowercase
+         textCase = text === text.toUpperCase() ? "upper" : "lower";
+
+         // Check if the character is numeric
+         if ($.isNumeric(text)) {
+            textCase = text % 2 === 0 ? "upper" : "lower"; // Determine case based on even/odd
+            text = 2 * parseInt(text / 2); // Convert to even number
+            text = text.toString() + (text + 1).toString(); // Create a string of the even number and the next number
+         } else {
+            // Handle special characters based on their char codes
             switch (text.charCodeAt(0)) {
                case 0:
                case 32:
                   text = "space-comma";
                   textCase = "upper";
-                  f = true;
+                  isSpace = true;
                   break;
                case 44:
                   text = "space-comma";
@@ -546,23 +570,27 @@ function renderText(msg) {
                   textCase = "lower";
                   break;
                case 194:
-                  text = "";
+                  text = ""; // No text for this case
                   textCase = "";
             }
          }
-      else {
+      } else {
+         // If the index is out of bounds, default to space
          text = "space-comma";
          textCase = "upper";
-         f = true;
+         isSpace = true;
       }
+
+      // If we have valid text and textCase, create the display element
       if (text && textCase) {
-         const g = f ? "space" : "";
+         const maskClass = isSpace ? "space" : ""; // Determine if we need a space class
          disp += `<div style="background:url(${CHAR_DIR}${text.toLowerCase()}.jpg)" class="${textCase}">
-                  <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=" class="mask ${g}" />
-               </div>`;
+                       <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=" class="mask ${maskClass}" />
+                    </div>`;
       }
    }
-   return disp;
+
+   return disp; // Return the final display string
 }
 
 function timertime() {
@@ -587,7 +615,7 @@ function zeroPad(num, pad = 2) {
 }
 
 function mask() {
-   const masks = document.querySelectorAll(".mask");
+   const masks = document.querySelectorAll(".mask:not(.space)");
    masks.forEach((mask) => {
       mask.style.opacity = brightness;
    });
