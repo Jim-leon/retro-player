@@ -409,7 +409,7 @@ function initSliders() {
          if (audioElement) audioElement.volume = b.value / 100;
          a = Math.ceil((b.value * volWidth) / 100);
          a = a > volWidth ? volWidth : a;
-         const volStr = `Vol${
+         const volStr = `VOL${
             a != Math.round((b.value * volWidth) / 100) ? "^".repeat(a - 1) + "|" + " ".repeat(27 - a) : "^".repeat(a) + " ".repeat(volWidth - a)
          }`;
          displayMiscInfo.innerHTML = renderText(volStr);
@@ -622,7 +622,7 @@ function mask() {
 }
 
 function getVolume() {
-   return `Vol ${zeroPad(volumeSlider.slider("value"), 3)}`;
+   return `VOL ${zeroPad(volumeSlider.slider("value"), 3)}`;
 }
 
 function getId3Data(track) {
