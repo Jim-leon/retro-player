@@ -2,6 +2,7 @@
 
 :root {
    --deflection: -48deg;
+   --sliderStyle: vertical;
 }
 
 .controls-container .wrapper .img,
@@ -125,11 +126,11 @@ img {
 }
 
 .controls-container .img.rew {
-   background-position: -465px 0;
+   background-position: -558px 0;
 }
 
 .controls-container .img.ff {
-   background-position: -558px 0;
+   background-position: -465px 0;
 }
 
 .controls-container .img:after,
@@ -157,10 +158,9 @@ img {
    opacity: 1;
 }
 
-.levels-container .label {
-   left: 0 !important;
-   margin: 0 auto;
-   display: block !important;
+.levels-container .label:not(.title) {
+
+   display: none !important;
 }
 
 .levels-container.logo {
@@ -385,24 +385,35 @@ img {
 }
 
 .slider.ui-slider .ui-slider-handle {
-   width: 58px;
-   height: 38px;
-   top: 20px;
+   width: 0px;
+   /* height: 258px; */
+   /* top: 20px; */
+   left: 20px;
    border: none;
    outline: none;
 }
 
 .slider {
-   height: 0 !important;
-   width: 382px;
+   height: 0;
+   width: 0;
    border: none !important;
-   margin: 10px;
+   margin: 10px; */
 }
 
 .slider-ui-content {
-   width: 50%;
+   /* width: 50%;
    margin-left: 30px;
-   margin-top: 30px;
+   margin-top: 30px; */
+}
+
+.ui-slider-handle img  {
+   position: relative;
+   bottom: -20px;
+}
+
+.ui-slider-vertical {
+   width: 0 !important;
+   height: 160px !important;
 }
 
 .ui-widget.ui-widget-content {
@@ -410,9 +421,8 @@ img {
 }
 
 .levels {
-   max-width: 440px;
-   width: 100%;
-   height: 78px;
+   width: 103px;
+   height: 245px;
    margin: 0 auto;
    background-image: url(./imgs/slider-bezel.png);
    margin-bottom: 10px;
@@ -431,24 +441,24 @@ img {
 }
 
 .display-row .slider {
-   height: 0 !important;
-   margin-top: 30px;
+   height: 230px;
+   /* margin-top: 30px;
    width: 166px;
    margin-left: 29px;
-   border: none !important;
+   border: none !important; */
 }
 
 .display-row .slider.ui-slider .ui-slider-handle {
-   width: 29px;
+   /* width: 29px;
    height: 0;
    margin-left: -29px;
    top: -25px;
-   border: none;
+   border: none; */
 }
 
 .display-row .ui-slider-handle img {
-   width: 29px;
-   height: 19px;
+   width: 64px;
+   height: 62px;
    outline: none;
 }
 

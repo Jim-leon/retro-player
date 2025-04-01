@@ -21,10 +21,10 @@ const balanceSlider = $(".balance-slider");
 const brightnessSlider = $(".brightness-slider");
 
 let audioElement = new Audio();
-let currentTrackIndex = -1;
+let currentTrackIndex = 0;
 let currentTime = 0;
 let tracks = [];
-let audioBuffer, sourceNode, analyser, style, deflection, audioSource, year;
+let audioBuffer, sourceNode, analyser, style, deflection, sliderStyle, audioSource, year;
 let trackPlaying = false;
 let albumLoaded = false;
 let balance = false;
@@ -46,7 +46,6 @@ document.getElementById("rewBtn").addEventListener("click", rewind);
 
 document.addEventListener("DOMContentLoaded", () => {
    style = window.getComputedStyle(document.body);
-   deflection = parseInt(style.getPropertyValue("--deflection").replace("deg", ""));
    setInterval(timertime, 1000);
    initSliders();
    initDisplay();
@@ -332,8 +331,6 @@ function startAnalyser() {
          movement(2, rightLevel);
       }
       if (VU_METERS == "bargraph") {
-         console.log(100 - (leftLevel / 255) * 100 + "%");
-
          leftLevelElement.style.width = 100 - Math.round((leftLevel * (100 / 255)) / 8) * 8 + "%";
          rightLevelElement.style.width = 100 - Math.round((rightLevel * (100 / 255)) / 8) * 8 + "%";
       }
@@ -384,21 +381,26 @@ function outputPerformanceTime(contextTime) {
 }
 
 function movement(meter, value) {
-   if (!deflection) {
-      style = window.getComputedStyle(document.body);
-      deflection = parseInt(style.getPropertyValue("--deflection").replace("deg", ""));
-   }
+   if (!deflection) deflection = parseInt(style.getPropertyValue("--deflection").replace("deg", ""));
    document.querySelector("#pol" + meter).style.opacity = value > 180 ? 1 : 0;
    document.querySelector("#pointer" + meter).style.WebkitTransform = `rotate(${(value / 255) * (Math.abs(deflection) * 2) + deflection}deg)`;
 }
 
 function initSliders() {
+   if (!sliderStyle) {
+      sliderStyle = style.getPropertyValue("--sliderStyle");
+      sliderStyle = "vertical";
+
+      console.log(sliderStyle);
+   }
+
    const knob = `<div class="my-handle ui-slider-handle">
                     <img src="theme/${THEME}/imgs/slider-knob.png" alt="slider_knob" border="0">
                  </div>`;
 
    volumeSlider.append(knob);
    volumeSlider.slider({
+      orientation: "vertical",
       range: "min",
       min: 0,
       max: 100,
@@ -422,10 +424,11 @@ function initSliders() {
 
    balanceSlider.append(knob);
    balanceSlider.slider({
+      orientation: "vertical",
       range: "min",
       min: -1,
       max: 1,
-      value: 0,
+      value: -0.015,
       step: 0.01,
       slide: function (a, b) {
          balance = true;
@@ -443,7 +446,8 @@ function initSliders() {
 
    brightnessSlider.append(knob);
    brightnessSlider.slider({
-      range: "max",
+      orientation: "vertical",
+      range: "min",
       min: 50,
       max: 100,
       value: 75,
