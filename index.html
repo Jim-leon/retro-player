@@ -7,7 +7,6 @@
       <link rel="shortcut icon" href="favicon.ico" />
       <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
       <link rel="manifest" href="site.webmanifest" />
-      <link rel="stylesheet" href="theme/common/bootstrap.min.css" type="text/css" />
       <link rel="stylesheet" id="theme" type="text/css" />
       <link rel="stylesheet" href="theme/common/jquery-ui.css" type="text/css" />
    </head>
@@ -19,137 +18,106 @@
          <img class="bottom left" />
          <img class="bottom right" />
       </div>
-      <div class="container">
-         <div class="row">
-            <div class="col-md-5">
-               <div class="meter-container">
-                  <div class="row">
-                     <div class="col-md-12">
-                        <span class="label title outpt">OUTPUT</span>
-                     </div>
-                  </div>
-                  <div class="bargraph">
-                     <div class="row vu-meters">
-                        <div class="col-md-3 label">LEFT</div>
-                        <div class="col-md-8 vu-meter">
-                           <div class="level" id="leftLevel"></div>
-                        </div>
-                     </div>
-                     <div class="row vu-meters">
-                        <div class="col-md-3 label">RIGHT</div>
-                        <div class="col-md-8 vu-meter">
-                           <div class="level" id="rightLevel"></div>
-                        </div>
-                     </div>
-                  </div>
-                  <div class="row analogue">
-                     <div class="col-sm-6 col-xs-12">
-                        <div class="meter">
-                           <div class="meter-face">
-                              <img id="pointer1" />
-                              <span class="pol" id="pol1"></span>
-                           </div>
-                        </div>
-                        <div class="label lft">LEFT</div>
-                     </div>
-                     <div class="col-sm-6 col-xs-12">
-                        <div class="meter">
-                           <div class="meter-face">
-                              <img id="pointer2" />
-                              <span class="pol" id="pol2"></span>
-                           </div>
-                        </div>
-                        <div class="label rght">RIGHT</div>
-                     </div>
+      <div class="grid-container">
+         <div class="meter-container">
+            <p class="label title outpt">OUTPUT</p>
+            <div class="bargraph">
+               <div class="vu-meters">
+                  <div class="label">LEFT</div>
+                  <div class="vu-meter">
+                     <div class="level" id="leftLevel"></div>
                   </div>
                </div>
-               <div class="screen-container">
-                  <div class="screen-wrapper">
-                     <div id="playlist"></div>
-                     <img />
-                  </div>
-               </div>
-               <div class="levels-container logo">
-                  <img alt="logo" id="logo" />
-               </div>
-            </div>
-            <div class="col-md-7">
-               <div class="display-container">
-                  <div class="display-row">
-                     <div class="trk-song" title="Track No. - Song Title"></div>
-                  </div>
-                  <div class="display-row">
-                     <div class="artist" title="Artist"></div>
-                  </div>
-                  <div class="display-row">
-                     <div class="album" title="Album"></div>
-                  </div>
-                  <div class="display-row">
-                     <div class="year-times-vol" title="Year - Time - Volume"></div>
-                     <input type="hidden" name="vol" id="vol" />
-                  </div>
-               </div>
-               <div class="levels-container">
-                  <div class="row">
-                     <div class="col-md-12">
-                        <span class="label title brghtnss">BRIGHTNESS</span>
-                     </div>
-                  </div>
-                  <div class="row">
-                     <div class="col-md-12">
-                        <div class="levels sm">
-                           <span class="label min">MIN</span>
-                           <div class="slider brightness-slider"></div>
-                           <span class="label max">MAX</span>
-                        </div>
-                     </div>
-                  </div>
-               </div>
-               <div class="controls-container">
-                  <div class="wrapper">
-                     <button id="stopBtn" class="img stop" title="Stop Song"></button>
-                     <button id="prevBtn" class="img prev" title="Previous Song"></button>
-                     <button id="rewBtn" class="img rew" title="Rewind Song"></button>
-                     <button id="playPauseBtn" class="img playpause" title="Play/Pause Song"></button>
-                     <button id="ffBtn" class="img ff" title="Fast Forward Song"></button>
-                     <button id="nextBtn" class="img next" title="Next Song"></button>
-                     <button id="select-song" class="img select-song" title="Load Song"></button>
-
-                     <form>
-                        <input type="file" class="hidden" accept=".mp3" id="fileInput" multiple webkitdirectory />
-                     </form>
-                  </div>
-               </div>
-               <div class="levels-container">
-                  <div class="row">
-                     <div class="">
-                        <span class="label title volm">VOLUME</span>
-                     </div>
-                  </div>
-                  <div class="row">
-                     <div class="">
-                        <div class="levels">
-                           <span class="label min">MIN</span>
-                           <div class="slider volume-slider"></div>
-                           <span class="label max">MAX</span>
-                        </div>
-                     </div>
-
-                     <div class="">
-                        <span class="label title blnce">BALANCE</span>
-                     </div>
-                  </div>
-                  <div class="row">
-                     <div class="">
-                        <div class="levels">
-                           <span class="label lft">LEFT</span>
-                           <div class="slider balance-slider"></div>
-                           <span class="label rght">RIGHT</span>
-                        </div>
-                     </div>
+               <div class="vu-meters">
+                  <div class="label">RIGHT</div>
+                  <div class="vu-meter">
+                     <div class="level" id="rightLevel"></div>
                   </div>
                </div>
             </div>
+            <div class="analogue">
+               <div class="meter">
+                  <div class="meter-face">
+                     <img id="pointer1" />
+                     <span class="pol" id="pol1"></span>
+                  </div>
+                  <div class="label">LEFT</div>
+               </div>
+
+               <div class="meter">
+                  <div class="meter-face">
+                     <img id="pointer2" />
+                     <span class="pol" id="pol2"></span>
+                  </div>
+                  <div class="label">RIGHT</div>
+               </div>
+            </div>
+         </div>
+         <div class="screen-container">
+            <div class="screen-wrapper">
+               <div id="playlist"></div>
+               <img />
+            </div>
+         </div>
+         <div class="logo-container">
+            <img alt="logo" id="logo" />
+         </div>
+         <div class="display-container">
+            <div class="display-row">
+               <div class="trk-song" title="Track No. - Song Title"></div>
+            </div>
+            <div class="display-row">
+               <div class="artist" title="Artist"></div>
+            </div>
+            <div class="display-row">
+               <div class="album" title="Album"></div>
+            </div>
+            <div class="display-row">
+               <div class="year-times-vol" title="Year - Time - Volume"></div>
+               <input type="hidden" name="vol" id="vol" />
+            </div>
+         </div>
+         <div class="brightness-level-container">
+            <p class="label title brghtnss">BRIGHTNESS</p>
+            <div class="levels">
+               <p class="label min">MIN</p>
+               <div class="slider brightness-slider"></div>
+               <p class="label max">MAX</p>
+            </div>
+         </div>
+         <div class="controls-container">
+            <div class="wrapper">
+               <button id="stopBtn" class="img stop" title="Stop Song"></button>
+               <button id="prevBtn" class="img prev" title="Previous Song"></button>
+               <button id="rewBtn" class="img rew" title="Rewind Song"></button>
+               <button id="playPauseBtn" class="img playpause" title="Play/Pause Song"></button>
+               <button id="ffBtn" class="img ff" title="Fast Forward Song"></button>
+               <button id="nextBtn" class="img next" title="Next Song"></button>
+               <button id="select-song" class="img select-song" title="Load Song"></button>
+               <form>
+                  <input type="file" class="hidden" accept=".mp3" id="fileInput" multiple webkitdirectory />
+               </form>
+            </div>
+         </div>
+         <div class="volume-level-container">
+            <!-- <div class="volume-control"> -->
+            <p class="label title volm">VOLUME</p>
+            <div class="levels">
+               <p class="label min">MIN</p>
+               <div class="slider volume-slider"></div>
+               <p class="label max">MAX</p>
+            </div>
+            <!-- </div> -->
+         </div>
+         <div class="balance-level-container">
+            <!-- <div class="balance-control"> -->
+            <p class="label title blnce">BALANCE</p>
+            <div class="levels">
+               <p class="label lft">LEFT</p>
+               <div class="slider balance-slider"></div>
+               <p class="label rght">RIGHT</p>
+            </div>
+            <!-- </div> -->
          </div>
       </div>
       <script src="js/jsmediatags.min.js"></script>

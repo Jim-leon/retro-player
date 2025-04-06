@@ -2,6 +2,81 @@
 
 :root {
    --deflection: -48deg;
+   --volumeSliderStyle: horizontal;
+   --balanceSliderStyle: horizontal;
+   --brightnessSliderStyle: vertical;
+   --vuMetersType: analogue;
+   --useCaps: true;
+}
+
+.grid-container {
+   display: grid;
+   grid-template-columns: repeat(6, 1fr);
+   grid-template-rows: repeat(5, 1fr);
+   gap: 8px;
+   padding: 50px;
+}
+
+.meter-container {
+   grid-column: span 2 / span 2;
+   grid-row: span 2 / span 2;
+}
+
+.display-container {
+   grid-column: span 3 / span 3;
+   grid-row: span 2 / span 2;
+   grid-column-start: 3;
+   flex-direction: column;
+   justify-content: center;
+}
+
+.brightness-level-container {
+   grid-row: span 2 / span 2;
+   grid-column-start: 6;
+   grid-row-start: 1;
+}
+
+.screen-container {
+   grid-column: span 2 / span 2;
+   grid-row: span 4 / span 4;
+   grid-column-start: 1;
+   grid-row-start: 3;
+}
+
+.logo-container {
+   grid-column-start: 6;
+   grid-row-start: 3;
+}
+
+.controls-container {
+   grid-column: span 3 / span 3;
+   grid-column-start: 3;
+   grid-row-start: 3;
+}
+
+.volume-level-container {
+   grid-column: span 3 / span 3;
+   grid-column-start: 3;
+   grid-row-start: 4;
+}
+
+.balance-level-container {
+   grid-column: span 3 / span 3;
+   grid-column-start: 3;
+   grid-row-start: 5;
+}
+
+.hidden {
+   display: none;
+}
+
+.bargraph {
+   display: none;
+}
+
+.analogue {
+   display: flex;
+   width: 100%;
 }
 
 .controls-container .wrapper .img,
@@ -74,7 +149,7 @@ img {
 
 .meter-face {
    width: 100%;
-   height: 103px;
+   height: calc(100% - 9px);
    overflow: hidden;
 }
 
@@ -170,32 +245,6 @@ img {
    opacity: 1;
 }
 
-.levels-container .label {
-   left: 0 !important;
-   margin: 0 auto;
-   display: block !important;
-}
-
-.levels-container.logo {
-   display: flex;
-   justify-content: center;
-   align-items: center;
-}
-
-.levels-container .label.lft,
-.levels-container .label.min {
-   float: left;
-   top: 30px;
-   left: -75px !important;
-}
-
-.levels-container .label.max,
-.levels-container .label.rght {
-   float: right;
-   top: 30px;
-   left: 75px !important;
-}
-
 .display-row {
    display: block;
    overflow: inherit;
@@ -214,18 +263,22 @@ img {
 }
 
 .controls-container,
-.levels-container,
+.brightness-level-container,
+.volume-level-container,
+.balance-level-container,
 .meter-container,
 .display-container,
-.screen-container {
+.screen-container,
+.logo-container {
    background-image: url(./imgs/plate.png);
    background-repeat: no-repeat;
    background-position: center center;
-   padding: 22px 12.5px;
-   margin-top: 30px;
    background-size: cover;
    position: relative;
-   display: inline-block;
+   display: flex;
+   flex-direction: column;
+   justify-content: flex-start;
+   align-items: center;
    width: 100%;
 }
 
@@ -282,17 +335,10 @@ img {
    padding: 0;
 }
 
-.levels-container {
-   padding: 15px 8px;
-}
-
-.analogue {
-   display: block;
-}
-
 .meter-container .label {
    margin: 4px auto;
-   display: block !important;
+   width: 100%;
+   text-align: center;
 }
 
 .display-row > div {
@@ -391,22 +437,27 @@ img {
 }
 
 .mask.space {
-   /*opacity: .4!important;*/
+   opacity: 0.4 !important;
 }
 
 .slider.ui-slider .ui-slider-handle {
    width: 58px;
    height: 38px;
-   top: 20px;
+   top: -20px;
    border: none;
    outline: none;
 }
 
 .slider {
-   height: 0 !important;
+   height: 0;
    width: 382px;
    border: none !important;
    margin: 10px;
+}
+
+.slider.ui-slider-vertical {
+   height: 382px;
+   width: 0;
 }
 
 .slider-ui-content {
@@ -419,17 +470,33 @@ img {
    border: none;
 }
 
-.levels {
-   max-width: 440px;
+.ui-slider-vertical {
+   width: 0 !important;
+   height: 160px !important;
+}
+
+.levels::before {
+   content: "";
+   position: absolute;
+   z-index: -1;
    width: 100%;
-   height: 78px;
-   margin: 0 auto;
+   height: 100%;
+   background-size: 100% 100%;
+   background-position: center;
+   background-repeat: no-repeat;
    background-image: url(./imgs/slider-bezel.png);
-   margin-bottom: 10px;
+}
+
+.levels.vertical::before {
+   transform: rotate(270deg);
 }
 
 .levels.sm {
    zoom: 0.8;
+}
+
+.slider.ui-slider-vertical img {
+   transform: rotate(90deg);
 }
 
 .display-row .levels {
@@ -465,9 +532,19 @@ img {
 .label {
    font-family: "Roboto", sans-serif;
    font-optical-sizing: auto;
-   width: 110px;
-   height: 20px;
    color: black;
    margin: 0;
    font-size: 14px;
+}
+
+.label.min,
+.label.lft {
+   position: relative;
+   left: -60px;
+}
+
+.label.max,
+.label.rght {
+   position: relative;
+   right: -60px;
 }

@@ -1,6 +1,4 @@
-const THEME = "90s";
-const VU_METERS = "bargraph";
-const USE_CAPS = true;
+const THEME = "70s";
 
 const CHAR_DIR = `theme/${THEME}/imgs/chars/medium/`;
 const DISPLAY_WIDTH = 30;
@@ -24,7 +22,7 @@ let audioElement = new Audio();
 let currentTrackIndex = 0;
 let currentTime = 0;
 let tracks = [];
-let audioBuffer, sourceNode, analyser, style, deflection, sliderStyle, audioSource, year;
+let audioBuffer, sourceNode, analyser, style, sliderStyle, audioSource, year;
 let trackPlaying = false;
 let albumLoaded = false;
 let balance = false;
@@ -46,9 +44,13 @@ document.getElementById("rewBtn").addEventListener("click", rewind);
 
 document.addEventListener("DOMContentLoaded", () => {
    style = window.getComputedStyle(document.body);
+   getThemes();
    setInterval(timertime, 1000);
-   initSliders();
-   initDisplay();
+   setTimeout(() => {
+      initSliders();
+      initDisplay();
+   }, 150);
+
    insertScrews();
 });
 
@@ -60,10 +62,20 @@ function triggerFiles() {
    fileInput.click();
 }
 
+function getThemes() {
+   var fs = require("fs");
+   var files = fs.readdirSync("/theme");
+   console.log(files);
+}
+
 function handleFiles(event) {
    const loadedFiles = event.target.files;
+   // console.log(loadedFiles);
+
    tracks = [];
    tracks = Array.from(loadedFiles).filter((file) => file.type === "audio/mpeg");
+   // console.log(tracks);
+
    // If path like artist/cd 1/song.mp3 its multidisk
    const multiDisk = tracks[0].webkitRelativePath.split("/").length > 2;
    tracks.forEach((track) => {
@@ -71,6 +83,7 @@ function handleFiles(event) {
    });
 
    setTimeout(() => {
+      compilation = isCompilation();
       processID3Data(tracks);
       tracks.sort(function (a, b) {
          // If multi disk sort by disk name first
@@ -88,72 +101,94 @@ function handleFiles(event) {
 
 function processID3Data(tracks) {
    tracks.forEach((track, index) => {
-      if (!track.id3data.TRCK?.data && track.id3data.track) {
-         track.id3data.TRCK = {};
-         track.id3data.TRCK.data = zeroPad(track.id3data.track.split("/")[0]);
-      } else if (track.id3data.TRCK?.data && !track.id3data.track) {
-         track.id3data.track = zeroPad(track.id3data.TRCK.data.split("/")[0]);
-      } else {
-         track.id3data.TRCK = {};
-         track.id3data.TRCK.data = zeroPad(index + 1);
-         track.id3data.track = zeroPad(index + 1);
+      if (!track.id3data.TRCK?.data && !track.id3data.track) {
+         if (!track.id3data.TRCK?.data && track.id3data.track) {
+            track.id3data.TRCK = {};
+            track.id3data.TRCK.data = zeroPad(track.id3data.track.split("/")[0]);
+         } else if (track.id3data.TRCK?.data && !track.id3data.track) {
+            track.id3data.track = zeroPad(track.id3data.TRCK.data.split("/")[0]);
+         } else {
+            track.id3data.TRCK = {};
+            track.id3data.TRCK.data = zeroPad(index + 1);
+            track.id3data.track = zeroPad(index + 1);
+         }
       }
 
-      if (track.id3data.artist && !track.id3data.TPE1?.data) {
-         track.id3data.TPE1 = {};
-         track.id3data.TPE1.data = track.id3data.artist;
-      } else if (!track.id3data.artist && track.id3data.TPE1?.data) {
-         track.id3data.artist = track.id3data.TPE1.data;
-      } else if (!track.id3data.artist && !track.id3data.TPE1?.data) {
-         const tempData = track.name.split(/[^ A-Za-z]/);
-         track.id3data.TPE1 = {};
-         track.id3data.TPE1.data = track.id3data.artist;
-         track.id3data.artist = tempData[0].trim();
+      if (!track.id3data.artist && !track.id3data.TPE1?.data) {
+         if (track.id3data.artist && !track.id3data.TPE1?.data) {
+            track.id3data.TPE1 = {};
+            track.id3data.TPE1.data = track.id3data.artist;
+         } else if (!track.id3data.artist && track.id3data.TPE1?.data) {
+            track.id3data.artist = track.id3data.TPE1.data;
+         } else if (!track.id3data.artist && !track.id3data.TPE1?.data) {
+            const tempData = track.name.split(/[^ A-Za-z]/);
+            track.id3data.TPE1 = {};
+            track.id3data.TPE1.data = track.id3data.artist;
+            track.id3data.artist = tempData[0].trim();
+         }
       }
-
-      if (track.id3data.title && !track.id3data.TIT2?.data) {
-         track.id3data.TIT2 = {};
-         track.id3data.TIT2.data = track.id3data.title;
-      } else if (!track.id3data.title && track.id3data.TIT2?.data) {
-         track.id3data.title = track.id3data.TIT2.data;
-      } else if (!track.id3data.title && !track.id3data.TIT2?.data) {
-         const tempData = track.name.split(/[^ A-Za-z]/);
-         track.id3data.title = tempData[1].trim();
+      if (!track.id3data.title && !track.id3data.TIT2?.data) {
+         if (track.id3data.title && !track.id3data.TIT2?.data) {
+            track.id3data.TIT2 = {};
+            track.id3data.TIT2.data = track.id3data.title;
+         } else if (!track.id3data.title && track.id3data.TIT2?.data) {
+            track.id3data.title = track.id3data.TIT2.data;
+         } else if (!track.id3data.title && !track.id3data.TIT2?.data) {
+            const tempData = track.name.split(/[^ A-Za-z]/);
+            track.id3data.title = tempData[1].trim();
+         }
       }
-
-      if (track.id3data.album && !track.id3data.TALB?.data) {
-         track.id3data.TALB = {};
-         track.id3data.TALB.data = track.id3data.album;
-      } else if (!track.id3data.album && track.id3data.TALB?.data) {
-         track.id3data.album = track.id3data.TALB.data;
-      } else if (!track.id3data.album && !track.id3data.TALB?.data) {
-         track.id3data.album = "Unknown";
-         track.id3data.TALB = {};
-         track.id3data.TALB.data = 1;
+      if (!track.id3data.album && !track.id3data.TALB?.data) {
+         if (track.id3data.album && !track.id3data.TALB?.data) {
+            track.id3data.TALB = {};
+            track.id3data.TALB.data = track.id3data.album;
+         } else if (!track.id3data.album && track.id3data.TALB?.data) {
+            track.id3data.album = track.id3data.TALB.data;
+         } else if (!track.id3data.album && !track.id3data.TALB?.data) {
+            track.id3data.album = "Unknown";
+            track.id3data.TALB = {};
+            track.id3data.TALB.data = 1;
+         }
       }
-
-      if (track.id3data.year && !track.id3data.TYER?.data) {
-         track.id3data.TYER = {};
-         track.id3data.TYER.data = track.id3data.year;
-      } else if (!track.id3data.year && track.id3data.TYER?.data) {
-         track.id3data.year = track.id3data.TYER.data;
-      } else if (!track.id3data.year && !track.id3data.TYER?.data) {
-         track.id3data.year = "1999";
-         track.id3data.TYER = {};
-         track.id3data.TYER.data = "1999";
+      if (!track.id3data.year && !track.id3data.TYER?.data) {
+         if (track.id3data.year && !track.id3data.TYER?.data) {
+            track.id3data.TYER = {};
+            track.id3data.TYER.data = track.id3data.year;
+         } else if (!track.id3data.year && track.id3data.TYER?.data) {
+            track.id3data.year = track.id3data.TYER.data;
+         } else if (!track.id3data.year && !track.id3data.TYER?.data) {
+            track.id3data.year = "1999";
+            track.id3data.TYER = {};
+            track.id3data.TYER.data = "1999";
+         }
       }
-
-      if (track.id3data.genre && !track.id3data.TCON?.data) {
-         track.id3data.TCON = {};
-         track.id3data.TCON.data = track.id3data.year;
-      } else if (!track.id3data.genre && track.id3data.TCON?.data) {
-         track.id3data.year = track.id3data.TCON.data;
-      } else if (!track.id3data.genre && !track.id3data.TCON?.data) {
-         track.id3data.genre = "Music";
-         track.id3data.TCON = {};
-         track.id3data.TYER.data = "Music";
+      if (!track.id3data.genre && !track.id3data.TCON?.data) {
+         if (track.id3data.genre && !track.id3data.TCON?.data) {
+            track.id3data.TCON = {};
+            track.id3data.TCON.data = track.id3data.year;
+         } else if (!track.id3data.genre && track.id3data.TCON?.data) {
+            track.id3data.year = track.id3data.TCON.data;
+         } else if (!track.id3data.genre && !track.id3data.TCON?.data) {
+            track.id3data.genre = "Music";
+            track.id3data.TCON = {};
+            track.id3data.TYER.data = "Music";
+         }
       }
    });
+}
+
+function isCompilation() {
+   const trackData = tracks[0].id3data;
+   let artist = trackData.artist;
+   let album = trackData?.album;
+   let genre = trackData?.genre;
+   year = trackData?.year;
+
+   const trackData2 = tracks[1].id3data;
+   let artist2 = trackData2.artist;
+   let album2 = trackData2?.album;
+
+   return artist !== artist2 && album !== album2;
 }
 
 function updatePlaylist() {
@@ -167,12 +202,11 @@ function updatePlaylist() {
    let artist2 = trackData2.artist;
    let album2 = trackData2?.album;
 
-   if (artist !== artist2 && album !== album2) {
+   if (compilation) {
       artist = "Various";
       album = "Compilation";
       genre = "Assorted";
       year = "0000";
-      compilation = true;
    }
 
    let disk = 1;
@@ -213,7 +247,7 @@ function updatePlaylist() {
 }
 
 function useCaps(text) {
-   return USE_CAPS ? text.toUpperCase() : text;
+   return style.getPropertyValue("--useCaps") == "true" ? text.toUpperCase() : text;
 }
 
 function centreText(text) {
@@ -252,7 +286,9 @@ function loadTrack() {
 }
 
 function playTrack() {
-   if (trackPlaying) {
+   if (!audioElement.paused) {
+      audioElement.pause();
+   } else if (trackPlaying) {
       audioContext.resume().then(() => {
          audioElement.play();
          startAnalyser();
@@ -264,10 +300,6 @@ function playTrack() {
       audioElement.currentTime = 0;
       startAnalyser();
    }
-}
-
-function pauseTrack() {
-   audioElement.pause();
 }
 
 function stopTrack() {
@@ -325,12 +357,12 @@ function startAnalyser() {
       analyser.getByteFrequencyData(dataArray);
       const leftLevel = dataArray[0];
       const rightLevel = dataArray[1];
-
-      if (VU_METERS == "analogue") {
+      const vuMetersType = style.getPropertyValue("--vuMetersType");
+      if (vuMetersType == "analogue") {
          movement(1, leftLevel);
          movement(2, rightLevel);
       }
-      if (VU_METERS == "bargraph") {
+      if (vuMetersType == "bargraph") {
          leftLevelElement.style.width = 100 - Math.round((leftLevel * (100 / 255)) / 8) * 8 + "%";
          rightLevelElement.style.width = 100 - Math.round((rightLevel * (100 / 255)) / 8) * 8 + "%";
       }
@@ -381,26 +413,22 @@ function outputPerformanceTime(contextTime) {
 }
 
 function movement(meter, value) {
-   if (!deflection) deflection = parseInt(style.getPropertyValue("--deflection").replace("deg", ""));
+   const deflection = parseInt(style.getPropertyValue("--deflection").replace("deg", ""));
    document.querySelector("#pol" + meter).style.opacity = value > 180 ? 1 : 0;
    document.querySelector("#pointer" + meter).style.WebkitTransform = `rotate(${(value / 255) * (Math.abs(deflection) * 2) + deflection}deg)`;
 }
 
 function initSliders() {
-   if (!sliderStyle) {
-      sliderStyle = style.getPropertyValue("--sliderStyle");
-      sliderStyle = "vertical";
-
-      console.log(sliderStyle);
-   }
-
+   const sliderOrientation = style.getPropertyValue("--deflection");
    const knob = `<div class="my-handle ui-slider-handle">
                     <img src="theme/${THEME}/imgs/slider-knob.png" alt="slider_knob" border="0">
                  </div>`;
 
+   const volumeSliderOrientation = style.getPropertyValue("--volumeSliderStyle");
+   volumeSlider.parent().addClass(volumeSliderOrientation);
    volumeSlider.append(knob);
    volumeSlider.slider({
-      orientation: "vertical",
+      orientation: volumeSliderOrientation,
       range: "min",
       min: 0,
       max: 100,
@@ -422,9 +450,11 @@ function initSliders() {
       },
    });
 
+   const balanceSliderOrientation = style.getPropertyValue("--volumeSliderStyle");
+   balanceSlider.parent().addClass(balanceSliderOrientation);
    balanceSlider.append(knob);
    balanceSlider.slider({
-      orientation: "vertical",
+      orientation: balanceSliderOrientation,
       range: "min",
       min: -1,
       max: 1,
@@ -444,9 +474,11 @@ function initSliders() {
       },
    });
 
+   const brightnessSliderOrientation = style.getPropertyValue("--brightnessSliderStyle");
+   brightnessSlider.parent().addClass(brightnessSliderOrientation + " small");
    brightnessSlider.append(knob);
    brightnessSlider.slider({
-      orientation: "vertical",
+      orientation: brightnessSliderOrientation,
       range: "min",
       min: 50,
       max: 100,
@@ -459,32 +491,27 @@ function initSliders() {
 }
 
 function renderText(msg) {
-   // If no message is provided, create a default message of dashes
    if (!msg) msg = "-".repeat(DISPLAY_WIDTH);
 
-   let disp = ""; // This will hold the final output
+   let disp = "";
 
-   // Loop through each character position up to DISPLAY_WIDTH
    for (let charPos = 0; charPos < DISPLAY_WIDTH; charPos++) {
-      let text = ""; // Variable to hold the current character
-      let textCase = ""; // Variable to determine the case (upper/lower)
-      let isSpace = false; // Flag to icharacter is a space
+      let text = "";
+      let textCase = "";
+      let isSpace = false;
 
-      // Check if the current index is within the message length
-      if (charPos < msg.length) {
-         text = msg.charAt(charPos); // Get the character at the current index
+      text = msg.charAt(charPos);
 
-         // Determine if the character is uppercase or lowercase
-         textCase = text === text.toUpperCase() ? "upper" : "lower";
+      textCase = text === text.toUpperCase() ? "upper" : "lower";
 
-         // Check if the character is numeric
-         if ($.isNumeric(text)) {
-            textCase = text % 2 === 0 ? "upper" : "lower"; // Determine case based on even/odd
-            text = 2 * parseInt(text / 2); // Convert to even number
-            text = text.toString() + (text + 1).toString(); // Create a string of the even number and the next number
-         } else {
-            // Handle special characters based on their char codes
-            switch (text.charCodeAt(0)) {
+      if ($.isNumeric(text)) {
+         textCase = text % 2 === 0 ? "upper" : "lower";
+         text = 2 * parseInt(text / 2);
+         text = text.toString() + (text + 1).toString();
+      } else {
+         const charCode = text.charCodeAt(0);
+         if (charCode > 31 && charCode < 256) {
+            switch (charCode) {
                case 32:
                   text = "space-comma";
                   textCase = "upper";
@@ -577,15 +604,13 @@ function renderText(msg) {
                   textCase = "lower";
                   break;
             }
+         } else {
+            text = "space-comma";
+            textCase = "upper";
+            isSpace = true;
          }
-      } else {
-         // If the index is out of bounds, default to space
-         text = "space-comma";
-         textCase = "upper";
-         isSpace = true;
       }
 
-      // If we have valid text and textCase, create the display element
       if (text && textCase) {
          const maskClass = isSpace ? " space" : ""; // Determine if we need a space class
          disp += `<div style="background:url(${CHAR_DIR}${text.toLowerCase()}.jpg)" class="${textCase}">
