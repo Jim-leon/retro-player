@@ -1,6 +1,7 @@
-const THEME = "70s";
+let theme = "Retro";
 
-const CHAR_DIR = `theme/${THEME}/imgs/chars/medium/`;
+const THEMES = ["Retro", "70s", "90s"];
+
 const DISPLAY_WIDTH = 30;
 
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -13,6 +14,7 @@ const displayTrkSong = document.querySelector(".display-container .trk-song");
 const displayArtist = document.querySelector(".display-container .artist");
 const displayAlbum = document.querySelector(".display-container .album");
 const displayMiscInfo = document.querySelector(".display-container .year-times-vol");
+const themeSelector = document.querySelector(".themes-container #themes");
 const screen = document.querySelector(".screen-wrapper");
 const volumeSlider = $(".volume-slider");
 const balanceSlider = $(".balance-slider");
@@ -20,19 +22,14 @@ const brightnessSlider = $(".brightness-slider");
 
 let audioElement = new Audio();
 let currentTrackIndex = 0;
-let currentTime = 0;
 let tracks = [];
-let audioBuffer, sourceNode, analyser, style, sliderStyle, audioSource, year;
+let analyser, style, audioSource, year, charDir, screw, sliderKnob;
 let trackPlaying = false;
-let albumLoaded = false;
 let balance = false;
 let volume = false;
 let compilation = false;
 let brightness = 0.25;
 
-document.getElementById("pointer1").src = document.getElementById("pointer2").src = `theme/${THEME}/imgs/needle.png`;
-document.getElementById("theme").href = `theme/${THEME}/styles.css`;
-document.getElementById("logo").src = `theme/${THEME}/imgs/logo.png`;
 document.getElementById("select-song").addEventListener("click", triggerFiles);
 document.getElementById("fileInput").addEventListener("change", handleFiles);
 document.getElementById("playPauseBtn").addEventListener("click", playTrack);
@@ -41,15 +38,12 @@ document.getElementById("nextBtn").addEventListener("click", nextTrack);
 document.getElementById("prevBtn").addEventListener("click", prevTrack);
 document.getElementById("ffBtn").addEventListener("click", fastForward);
 document.getElementById("rewBtn").addEventListener("click", rewind);
+themeSelector.addEventListener("change", updateTheme);
 
 document.addEventListener("DOMContentLoaded", () => {
    style = window.getComputedStyle(document.body);
    getThemes();
-   setInterval(timertime, 1000);
-   setTimeout(() => {
-      initSliders();
-      initDisplay();
-   }, 150);
+   setTheme(theme);
 
    insertScrews();
 });
@@ -63,9 +57,32 @@ function triggerFiles() {
 }
 
 function getThemes() {
-   var fs = require("fs");
-   var files = fs.readdirSync("/theme");
-   console.log(files);
+   THEMES.forEach((newTheme) => {
+      const option = document.createElement("option");
+      option.value = newTheme;
+      option.innerHTML = newTheme;
+      if (theme == newTheme) option.setAttribute("selected", true);
+      themeSelector.append(option);
+   });
+}
+
+function updateTheme(e) {
+   theme = e.target.selectedOptions[0].value;
+   setTheme();
+}
+
+function setTheme() {
+   charDir = `theme/${theme}/imgs/chars/medium/`;
+   document.getElementById("pointer1").src = document.getElementById("pointer2").src = `theme/${theme}/imgs/needle.png`;
+   document.getElementById("theme").href = `theme/${theme}/styles.css`;
+   document.getElementById("logo").src = `theme/${theme}/imgs/logo.png`;
+   screw = `<img src="theme/${theme}/imgs/screw.png" style="`;
+
+   setTimeout(() => {
+      initSliders();
+      initDisplay();
+      setInterval(timertime, 1000);
+   }, 150);
 }
 
 function handleFiles(event) {
@@ -381,7 +398,7 @@ function initDisplay() {
 }
 
 function insertScrews() {
-   if (THEME != "retro") return;
+   if (theme != "retro") return;
    const screws = document.querySelectorAll(".screws");
    screws.forEach((screw) => {
       screw.remove();
@@ -389,7 +406,6 @@ function insertScrews() {
 
    document.querySelectorAll('div[class*="-container"]').forEach((div) => {
       const padd = "7px;";
-      const screw = `<img src="theme/${THEME}/imgs/screw.png" style="`;
       div.insertAdjacentHTML(
          "beforeend",
          `<div class="screws">
@@ -420,13 +436,14 @@ function movement(meter, value) {
 
 function initSliders() {
    const sliderOrientation = style.getPropertyValue("--deflection");
-   const knob = `<div class="my-handle ui-slider-handle">
-                    <img src="theme/${THEME}/imgs/slider-knob.png" alt="slider_knob" border="0">
+
+   sliderKnob = `<div class="my-handle ui-slider-handle">
+                    <img alt="slider_knob" class="slider-knob" border="0">
                  </div>`;
 
    const volumeSliderOrientation = style.getPropertyValue("--volumeSliderStyle");
    volumeSlider.parent().addClass(volumeSliderOrientation);
-   volumeSlider.append(knob);
+   volumeSlider.append(sliderKnob);
    volumeSlider.slider({
       orientation: volumeSliderOrientation,
       range: "min",
@@ -452,7 +469,7 @@ function initSliders() {
 
    const balanceSliderOrientation = style.getPropertyValue("--volumeSliderStyle");
    balanceSlider.parent().addClass(balanceSliderOrientation);
-   balanceSlider.append(knob);
+   balanceSlider.append(sliderKnob);
    balanceSlider.slider({
       orientation: balanceSliderOrientation,
       range: "min",
@@ -476,7 +493,7 @@ function initSliders() {
 
    const brightnessSliderOrientation = style.getPropertyValue("--brightnessSliderStyle");
    brightnessSlider.parent().addClass(brightnessSliderOrientation + " small");
-   brightnessSlider.append(knob);
+   brightnessSlider.append(sliderKnob);
    brightnessSlider.slider({
       orientation: brightnessSliderOrientation,
       range: "min",
@@ -613,7 +630,7 @@ function renderText(msg) {
 
       if (text && textCase) {
          const maskClass = isSpace ? " space" : ""; // Determine if we need a space class
-         disp += `<div style="background:url(${CHAR_DIR}${text.toLowerCase()}.jpg)" class="${textCase}">
+         disp += `<div style="background:url(${charDir}${text.toLowerCase()}.jpg)" class="${textCase}">
                        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=" class="mask${maskClass}" />
                     </div>`;
       }

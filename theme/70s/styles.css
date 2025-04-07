@@ -66,6 +66,16 @@
    grid-row-start: 5;
 }
 
+.themes-container {
+   grid-row: span 2 / span 2;
+   grid-column-start: 6;
+   grid-row-start: 4;
+}
+
+.slider-knob {
+   content: url(./imgs/slider-knob.png);
+}
+
 .hidden {
    display: none;
 }
@@ -263,6 +273,7 @@ img {
 }
 
 .controls-container,
+.themes-container,
 .brightness-level-container,
 .volume-level-container,
 .balance-level-container,
