@@ -341,13 +341,13 @@ img {
    background: rgb(27, 27, 27);
    height: 100%;
    color: white;
-   padding: 1rem 2rem;
    font-size: 1.5rem;
    transition: opacity 0.5s ease-in-out;
 }
 
 #playlist div {
    cursor: pointer;
+   margin-left: 1rem;
 }
 #playlist div.selected {
    background: cornflowerblue;

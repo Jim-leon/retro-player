@@ -71,7 +71,7 @@
 }
 
 .slider-knob {
-   content: url(./imgs/slider-knob.webp);
+   content: url(imgs/slider-knob.webp);
 }
 
 .hidden {
@@ -137,18 +137,10 @@ img {
    left: 50%;
    bottom: 14%;
    transform: rotate(var(--deflection));
-}
-
-#pointer1,
-#pointer2 {
-   position: absolute;
-   left: calc(50% - 11px);
-   bottom: -55%;
-   transform: rotate(var(--deflection));
-   scale: 0.5;
    transform-origin: 50% 85%;
    transition: transform 0.05s ease;
-   content: url(/imgs/needle.webp);
+   content: url(imgs/needle.webp);
+}
 
 .labels,
 .meter,
@@ -251,7 +243,7 @@ img {
 }
 
 #logo {
-   content: url(./imgs/logo.webp);
+   content: url(imgs/logo.webp);
 }
 
 .display-row {
@@ -379,7 +371,7 @@ img {
 }
 
 .screws img {
-   content: url(./imgs/screw.webp);
+   content: url(imgs/screw.webp);
 }
 
 .label,
@@ -538,7 +530,7 @@ img {
    width: 100px;
    height: 46px;
    display: flex;
-   align-items: anchor-center;
+   align-items: center;
    outline: none;
    justify-content: center;
    background-color: #967d42;

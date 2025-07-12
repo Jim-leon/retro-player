@@ -39,7 +39,6 @@ function bindUI() {
    document.getElementById("prevBtn")?.addEventListener("click", prevTrack);
    document.getElementById("ffBtn")?.addEventListener("click", fastForward);
    document.getElementById("rewBtn")?.addEventListener("click", rewind);
-   themeSelector?.addEventListener("change", updateTheme);
 }
 
 if (themeSelector) {
@@ -487,6 +486,9 @@ function initSliders() {
 }
 
 function renderText(msg = "-".repeat(DISPLAY_WIDTH)) {
+   console.log(msg, msg.length);
+   msg = msg.padEnd(DISPLAY_WIDTH, " ");
+
    const SYMBOL_MAP = {
       32: ["space-comma", "upper", true],
       44: ["space-comma", "lower", false],
@@ -531,9 +533,12 @@ function renderText(msg = "-".repeat(DISPLAY_WIDTH)) {
          textCase = base % 2 === 0 ? "upper" : "lower";
       } else {
          const code = char.charCodeAt(0);
-         if (code > 31 && code < 256 && SYMBOL_MAP[code]) {
+         if (SYMBOL_MAP[code]) {
             [text, textCase, isSpace] = SYMBOL_MAP[code];
-         } else if (code <= 31 || code >= 256) {
+         } else if ((code >= 65 && code <= 90) || (code >= 97 && code <= 122)) {
+            text = char;
+            isSpace = false;
+         } else {
             text = "space-comma";
             textCase = "upper";
             isSpace = true;
@@ -584,6 +589,8 @@ function getId3Data(track) {
    return new Promise((resolve) => {
       jsmediatags.read(track, {
          onSuccess: (tag) => {
+            // console.log(tag);
+
             track.id3data = tag.tags;
             resolve();
          },
