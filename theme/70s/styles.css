@@ -86,11 +86,11 @@
 }
 
 .slider-knob {
-   content: url(./imgs/slider-knob.webp);
+   content: url(imgs/slider-knob.webp);
 }
 
 #logo {
-   content: url(./imgs/logo.webp);
+   content: url(imgs/logo.webp);
 }
 
 .hidden {
@@ -107,16 +107,8 @@
 }
 
 .controls-container .wrapper .img,
-.meter,
-body {
+.meter {
    background-position: center center;
-   background-repeat: no-repeat;
-}
-
-.controls-container .wrapper .img,
-.meter,
-.screen-wrapper,
-body {
    background-repeat: no-repeat;
 }
 
@@ -126,9 +118,8 @@ body {
 }
 
 body {
-   background-image: url(./imgs/brushed-metal.webp);
+   background-image: url(imgs/brushed-metal.webp);
    background-size: auto;
-   background-repeat: repeat;
 }
 
 body > img {
@@ -145,11 +136,10 @@ img {
    position: absolute;
    left: calc(50% - 11px);
    bottom: -55%;
-   transform: rotate(var(--deflection));
-   scale: 0.5;
+   transform: scale(0.5) rotate(var(--deflection));
    transform-origin: 50% 85%;
    transition: transform 0.05s ease;
-   content: url(./imgs/needle.webp);
+   content: url(imgs/needle.webp);
 }
 
 .labels,
@@ -170,7 +160,7 @@ img {
 .meter {
    height: 113px;
    width: 100%;
-   background-image: url(./imgs/vu-meter.webp);
+   background-image: url(imgs/vu-meter.webp);
    margin: 0 auto;
    background-size: contain;
 }
@@ -203,7 +193,7 @@ img {
    height: 90px;
    top: 5px;
    margin: 0 10px;
-   background-image: url(./imgs/controls.webp);
+   background-image: url(imgs/controls.webp);
    position: relative;
    opacity: 0.8;
    background-color: transparent;
@@ -301,7 +291,7 @@ img {
 .display-container,
 .screen-container,
 .logo-container {
-   background-image: url(./imgs/plate.webp);
+   background-image: url(imgs/plate.webp);
    background-repeat: no-repeat;
    background-position: center center;
    background-size: cover;
@@ -411,7 +401,7 @@ img {
    position: absolute;
    width: 2vw;
    height: 2vw;
-   content: url(./imgs/corner.webp);
+   content: url(imgs/corner.webp);
 }
 
 .label,
@@ -546,7 +536,7 @@ img {
    background-size: 100% 100%;
    background-position: center;
    background-repeat: no-repeat;
-   background-image: url(./imgs/slider-bezel.webp);
+   background-image: url(imgs/slider-bezel.webp);
 }
 
 .levels.small {
@@ -565,7 +555,7 @@ img {
    top: 8px;
    position: relative;
    width: 200px;
-   height: 40px;
+   height: 32px;
    background-size: cover;
 }
 

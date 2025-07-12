@@ -1,4 +1,4 @@
-let theme = "70s";
+let theme = "Retro";
 
 const THEMES = ["Retro", "70s", "90s"];
 
@@ -79,7 +79,7 @@ function setTheme() {
       initSliders();
       initDisplay();
       insertScrews();
-      // setInterval(timertime, 1000); // Enable if clock updating is needed
+      setInterval(timertime, 1000);
    }, 150);
 }
 
@@ -108,35 +108,6 @@ async function handleFiles(event) {
    });
 
    updatePlaylist();
-}
-
-function processID3Data(tracks) {
-   tracks.forEach((track, index) => {
-      const data = track.id3data;
-      const fallback = (val, fallbackVal) => val || fallbackVal;
-
-      const syncTag = (field, tag, generate) => {
-         const value = data[field];
-         const tagValue = data[tag]?.data;
-
-         if (value && !tagValue) {
-            data[tag] = { data: value };
-         } else if (!value && tagValue) {
-            data[field] = tagValue;
-         } else if (!value && !tagValue) {
-            const derived = generate();
-            data[field] = derived;
-            data[tag] = { data: derived };
-         }
-      };
-
-      syncTag("track", "TRCK", () => zeroPad(index + 1));
-      syncTag("artist", "TPE1", () => track.name.split(/[^ A-Za-z]/)[0]?.trim() || "Artist");
-      syncTag("title", "TIT2", () => track.name.split(/[^ A-Za-z]/)[1]?.trim() || "Track");
-      syncTag("album", "TALB", () => "Unknown");
-      syncTag("year", "TYER", () => "1999");
-      syncTag("genre", "TCON", () => "Music");
-   });
 }
 
 function processID3Data(tracks) {
@@ -379,13 +350,9 @@ function initDisplay() {
 function insertScrews() {
    document.querySelectorAll(".screws").forEach((el) => el.remove());
    if (theme !== "Retro") return;
-
    const positions = ["left:7px;top:7px;", "right:7px;top:7px;", "right:7px;bottom:7px;", "left:7px;bottom:7px;"];
-
    const createScrew = () => `<img alt="screw" style="${randomRotation()}" />`;
-
    const randomRotation = () => `transform:rotate(${Math.floor(Math.random() * 180) + 1}deg);`;
-
    document.querySelectorAll('div[class*="-container"]').forEach((div) => {
       const screwImgs = positions.map((pos) => `${createScrew().replace('style="', `style="${pos}${randomRotation()}`)}`).join("");
       div.insertAdjacentHTML("beforeend", `<div class="screws">${screwImgs}</div>`);
@@ -402,10 +369,8 @@ const movement = (meter, value) => {
    const deflectionDeg = parseInt(style.getPropertyValue("--deflection"), 10) || 0;
    const opacity = value > 180 ? 1 : 0;
    const rotation = (value / 255) * (Math.abs(deflectionDeg) * 2) + deflectionDeg;
-
    const polEl = document.querySelector(`#pol${meter}`);
    const pointerEl = document.querySelector(`#pointer${meter}`);
-
    if (polEl) polEl.style.opacity = opacity;
    if (pointerEl) pointerEl.style.WebkitTransform = `rotate(${rotation.toFixed(2)}deg)`;
 };
@@ -486,8 +451,8 @@ function initSliders() {
 }
 
 function renderText(msg = "-".repeat(DISPLAY_WIDTH)) {
-   console.log(msg, msg.length);
    msg = msg.padEnd(DISPLAY_WIDTH, " ");
+   console.log(msg);
 
    const SYMBOL_MAP = {
       32: ["space-comma", "upper", true],
@@ -530,7 +495,7 @@ function renderText(msg = "-".repeat(DISPLAY_WIDTH)) {
       if ($.isNumeric(char)) {
          const base = 2 * Math.floor(parseInt(char, 10) / 2);
          text = `${base}${base + 1}`;
-         textCase = base % 2 === 0 ? "upper" : "lower";
+         textCase = parseInt(char, 10) % 2 === 0 ? "upper" : "lower";
       } else {
          const code = char.charCodeAt(0);
          if (SYMBOL_MAP[code]) {
@@ -561,6 +526,7 @@ function timertime() {
    if (balance || volume) return true;
 
    const yr = year || "----";
+   // console.log(audioElement.currentTime);
 
    const infoText = trackPlaying
       ? `${yr}    ${formatTime(audioElement.currentTime)}/${formatTime(audioElement.duration)}    ${getVolume()}`
@@ -589,8 +555,6 @@ function getId3Data(track) {
    return new Promise((resolve) => {
       jsmediatags.read(track, {
          onSuccess: (tag) => {
-            // console.log(tag);
-
             track.id3data = tag.tags;
             resolve();
          },

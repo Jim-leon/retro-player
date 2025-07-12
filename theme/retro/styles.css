@@ -14,7 +14,6 @@
    grid-template-columns: repeat(4, 1fr);
    grid-template-rows: repeat(6, 1fr);
    gap: 10px;
-   padding: 50px;
 }
 
 .meter-container {
@@ -41,6 +40,7 @@
    grid-column-start: 1;
    grid-row-start: 3;
    min-width: 420px;
+   min-height: 420px;
 }
 
 .logo-container {
@@ -120,6 +120,10 @@ body {
    background-image: url(imgs/background-tile.webp);
    background-size: auto;
    background-repeat: repeat;
+   display: flex;
+   justify-content: center;
+   align-items: center;
+   height: 100vh;
 }
 
 body > img {
@@ -185,8 +189,6 @@ img {
 .controls-container .wrapper .img {
    width: 60px;
    height: 60px;
-   /* left: -9px;
-   top: 5px; */
    margin: 5px auto;
    background-image: url(imgs/controls.webp);
    position: relative;
@@ -269,6 +271,7 @@ img {
    width: 400px;
    height: 400px;
    transform: translate(-50%, -50%);
+   pointer-events: none;
    z-index: 10;
 }
 
@@ -319,6 +322,7 @@ img {
    flex-direction: column;
    justify-content: center;
    align-items: center;
+   padding: 1rem 0;
    width: 100%;
 }
 
@@ -345,9 +349,9 @@ img {
 .lower,
 .upper {
    width: 20px;
-   height: 40px;
+   height: 32px;
    float: left;
-   margin: 0px;
+   margin: 0;
 }
 
 .upper {
@@ -553,4 +557,65 @@ img {
    background: none;
    border: none;
    background-color: #967d42;
+}
+
+@media (max-width: 1024px) {
+   body {
+      flex-direction: column;
+      padding: 1rem;
+      justify-content: center;
+      width: 100vw;
+      align-items: ;
+   }
+
+   .grid-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+   }
+
+   .controls-container .wrapper {
+      flex-wrap: wrap;
+      justify-content: center;
+   }
+
+   .controls-container .img {
+      width: clamp(40px, 20vw, 60px);
+      height: clamp(40px, 20vw, 60px);
+   }
+
+   .label,
+   .display-row > div {
+      font-size: clamp(12px, 4vw, 18px);
+   }
+
+   #playlist {
+      font-size: clamp(10px, 3vw, 16px);
+      max-height: 50vh;
+      overflow-y: auto;
+   }
+
+   .select-wrapper {
+      width: auto;
+      max-width: 100px;
+   }
+
+   .slider,
+   .levels {
+      width: 90%;
+      margin: 0 auto;
+   }
+
+   .screen-wrapper {
+      max-width: 90vw;
+      height: auto;
+   }
+
+   .logo-container img {
+      max-height: 80px;
+   }
+
+   .corners {
+      display: none;
+   }
 }
