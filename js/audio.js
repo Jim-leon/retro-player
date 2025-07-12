@@ -1,4 +1,4 @@
-let theme = "Retro";
+let theme = "70s";
 
 const THEMES = ["Retro", "70s", "90s"];
 
@@ -23,289 +23,277 @@ const brightnessSlider = $(".brightness-slider");
 let audioElement = new Audio();
 let currentTrackIndex = 0;
 let tracks = [];
-let analyser, style, audioSource, year, charDir, screw, sliderKnob;
+let analyser, style, audioSource, year, charDir, sliderKnob;
 let trackPlaying = false;
 let balance = false;
 let volume = false;
 let compilation = false;
 let brightness = 0.25;
 
-document.getElementById("select-song").addEventListener("click", triggerFiles);
-document.getElementById("fileInput").addEventListener("change", handleFiles);
-document.getElementById("playPauseBtn").addEventListener("click", playTrack);
-document.getElementById("stopBtn").addEventListener("click", stopTrack);
-document.getElementById("nextBtn").addEventListener("click", nextTrack);
-document.getElementById("prevBtn").addEventListener("click", prevTrack);
-document.getElementById("ffBtn").addEventListener("click", fastForward);
-document.getElementById("rewBtn").addEventListener("click", rewind);
-themeSelector.addEventListener("change", updateTheme);
-
-document.addEventListener("DOMContentLoaded", () => {
-   style = window.getComputedStyle(document.body);
-   getThemes();
-   setTheme(theme);
-
-   insertScrews();
-});
-
-window.onresize = function () {
-   insertScrews();
-};
-
-function triggerFiles() {
-   fileInput.click();
+function bindUI() {
+   document.getElementById("select-song")?.addEventListener("click", triggerFiles);
+   fileInput?.addEventListener("change", handleFiles);
+   document.getElementById("playPauseBtn")?.addEventListener("click", playTrack);
+   document.getElementById("stopBtn")?.addEventListener("click", stopTrack);
+   document.getElementById("nextBtn")?.addEventListener("click", nextTrack);
+   document.getElementById("prevBtn")?.addEventListener("click", prevTrack);
+   document.getElementById("ffBtn")?.addEventListener("click", fastForward);
+   document.getElementById("rewBtn")?.addEventListener("click", rewind);
+   themeSelector?.addEventListener("change", updateTheme);
 }
 
+if (themeSelector) {
+   themeSelector.addEventListener("change", updateTheme);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+   style = getComputedStyle(document.body);
+   getThemes();
+   setTheme(theme);
+   insertScrews();
+   bindUI();
+});
+
+window.addEventListener("resize", insertScrews);
+
+const triggerFiles = () => fileInput?.click();
+
 function getThemes() {
-   THEMES.forEach((newTheme) => {
+   THEMES.forEach((themeName) => {
       const option = document.createElement("option");
-      option.value = newTheme;
-      option.innerHTML = newTheme;
-      if (theme == newTheme) option.setAttribute("selected", true);
-      themeSelector.append(option);
+      option.value = option.textContent = themeName;
+      if (theme === themeName) option.selected = true;
+      themeSelector.appendChild(option);
    });
 }
 
 function updateTheme(e) {
-   theme = e.target.selectedOptions[0].value;
+   theme = e.target.selectedOptions[0]?.value || theme;
    setTheme();
 }
 
 function setTheme() {
    charDir = `theme/${theme}/imgs/chars/medium/`;
-   document.getElementById("pointer1").src = document.getElementById("pointer2").src = `theme/${theme}/imgs/needle.png`;
    document.getElementById("theme").href = `theme/${theme}/styles.css`;
-   document.getElementById("logo").src = `theme/${theme}/imgs/logo.png`;
-   screw = `<img src="theme/${theme}/imgs/screw.png" style="`;
 
    setTimeout(() => {
       initSliders();
       initDisplay();
-      setInterval(timertime, 1000);
+      insertScrews();
+      // setInterval(timertime, 1000); // Enable if clock updating is needed
    }, 150);
 }
 
-function handleFiles(event) {
-   const loadedFiles = event.target.files;
-   // console.log(loadedFiles);
+async function handleFiles(event) {
+   tracks = Array.from(event.target.files).filter((file) => file.type === "audio/mpeg");
+   if (!tracks.length) return;
 
-   tracks = [];
-   tracks = Array.from(loadedFiles).filter((file) => file.type === "audio/mpeg");
-   // console.log(tracks);
+   const multiDisk = tracks[0]?.webkitRelativePath?.split("/")?.length > 2;
 
-   // If path like artist/cd 1/song.mp3 its multidisk
-   const multiDisk = tracks[0].webkitRelativePath.split("/").length > 2;
-   tracks.forEach((track) => {
-      getId3Data(track);
+   await Promise.all(tracks.map((track) => getId3Data(track)));
+
+   compilation = isCompilation();
+   processID3Data(tracks);
+
+   tracks.sort((a, b) => {
+      const albumA = a.id3data.album ?? "";
+      const albumB = b.id3data.album ?? "";
+      const trackA = parseInt(a.id3data.track, 10);
+      const trackB = parseInt(b.id3data.track, 10);
+
+      if (multiDisk && albumA !== albumB) {
+         return albumA.localeCompare(albumB);
+      }
+
+      return trackA - trackB;
    });
 
-   setTimeout(() => {
-      compilation = isCompilation();
-      processID3Data(tracks);
-      tracks.sort(function (a, b) {
-         // If multi disk sort by disk name first
-         if (multiDisk) {
-            if (a.id3data.album < b.id3data.album) return -1;
-            if (a.id3data.album > b.id3data.album) return 1;
-         }
-         // Sort tracks by song id
-         if (a.id3data.track > b.id3data.track) return 1;
-         if (a.id3data.track < b.id3data.track) return -1;
-      });
-      if (tracks.length) updatePlaylist();
-   }, 500);
+   updatePlaylist();
 }
 
 function processID3Data(tracks) {
    tracks.forEach((track, index) => {
-      if (!track.id3data.TRCK?.data && !track.id3data.track) {
-         if (!track.id3data.TRCK?.data && track.id3data.track) {
-            track.id3data.TRCK = {};
-            track.id3data.TRCK.data = zeroPad(track.id3data.track.split("/")[0]);
-         } else if (track.id3data.TRCK?.data && !track.id3data.track) {
-            track.id3data.track = zeroPad(track.id3data.TRCK.data.split("/")[0]);
-         } else {
-            track.id3data.TRCK = {};
-            track.id3data.TRCK.data = zeroPad(index + 1);
-            track.id3data.track = zeroPad(index + 1);
-         }
-      }
+      const data = track.id3data;
+      const fallback = (val, fallbackVal) => val || fallbackVal;
 
-      if (!track.id3data.artist && !track.id3data.TPE1?.data) {
-         if (track.id3data.artist && !track.id3data.TPE1?.data) {
-            track.id3data.TPE1 = {};
-            track.id3data.TPE1.data = track.id3data.artist;
-         } else if (!track.id3data.artist && track.id3data.TPE1?.data) {
-            track.id3data.artist = track.id3data.TPE1.data;
-         } else if (!track.id3data.artist && !track.id3data.TPE1?.data) {
-            const tempData = track.name.split(/[^ A-Za-z]/);
-            track.id3data.TPE1 = {};
-            track.id3data.TPE1.data = track.id3data.artist;
-            track.id3data.artist = tempData[0].trim();
+      const syncTag = (field, tag, generate) => {
+         const value = data[field];
+         const tagValue = data[tag]?.data;
+
+         if (value && !tagValue) {
+            data[tag] = { data: value };
+         } else if (!value && tagValue) {
+            data[field] = tagValue;
+         } else if (!value && !tagValue) {
+            const derived = generate();
+            data[field] = derived;
+            data[tag] = { data: derived };
          }
-      }
-      if (!track.id3data.title && !track.id3data.TIT2?.data) {
-         if (track.id3data.title && !track.id3data.TIT2?.data) {
-            track.id3data.TIT2 = {};
-            track.id3data.TIT2.data = track.id3data.title;
-         } else if (!track.id3data.title && track.id3data.TIT2?.data) {
-            track.id3data.title = track.id3data.TIT2.data;
-         } else if (!track.id3data.title && !track.id3data.TIT2?.data) {
-            const tempData = track.name.split(/[^ A-Za-z]/);
-            track.id3data.title = tempData[1].trim();
+      };
+
+      syncTag("track", "TRCK", () => zeroPad(index + 1));
+      syncTag("artist", "TPE1", () => track.name.split(/[^ A-Za-z]/)[0]?.trim() || "Artist");
+      syncTag("title", "TIT2", () => track.name.split(/[^ A-Za-z]/)[1]?.trim() || "Track");
+      syncTag("album", "TALB", () => "Unknown");
+      syncTag("year", "TYER", () => "1999");
+      syncTag("genre", "TCON", () => "Music");
+   });
+}
+
+function processID3Data(tracks) {
+   tracks.forEach((track, index) => {
+      const data = track.id3data;
+      const fallback = (val, fallbackVal) => val || fallbackVal;
+
+      const syncTag = (field, tag, generate) => {
+         const value = data[field];
+         const tagValue = data[tag]?.data;
+
+         if (value && !tagValue) {
+            data[tag] = { data: value };
+         } else if (!value && tagValue) {
+            data[field] = tagValue;
+         } else if (!value && !tagValue) {
+            const derived = generate();
+            data[field] = derived;
+            data[tag] = { data: derived };
          }
-      }
-      if (!track.id3data.album && !track.id3data.TALB?.data) {
-         if (track.id3data.album && !track.id3data.TALB?.data) {
-            track.id3data.TALB = {};
-            track.id3data.TALB.data = track.id3data.album;
-         } else if (!track.id3data.album && track.id3data.TALB?.data) {
-            track.id3data.album = track.id3data.TALB.data;
-         } else if (!track.id3data.album && !track.id3data.TALB?.data) {
-            track.id3data.album = "Unknown";
-            track.id3data.TALB = {};
-            track.id3data.TALB.data = 1;
-         }
-      }
-      if (!track.id3data.year && !track.id3data.TYER?.data) {
-         if (track.id3data.year && !track.id3data.TYER?.data) {
-            track.id3data.TYER = {};
-            track.id3data.TYER.data = track.id3data.year;
-         } else if (!track.id3data.year && track.id3data.TYER?.data) {
-            track.id3data.year = track.id3data.TYER.data;
-         } else if (!track.id3data.year && !track.id3data.TYER?.data) {
-            track.id3data.year = "1999";
-            track.id3data.TYER = {};
-            track.id3data.TYER.data = "1999";
-         }
-      }
-      if (!track.id3data.genre && !track.id3data.TCON?.data) {
-         if (track.id3data.genre && !track.id3data.TCON?.data) {
-            track.id3data.TCON = {};
-            track.id3data.TCON.data = track.id3data.year;
-         } else if (!track.id3data.genre && track.id3data.TCON?.data) {
-            track.id3data.year = track.id3data.TCON.data;
-         } else if (!track.id3data.genre && !track.id3data.TCON?.data) {
-            track.id3data.genre = "Music";
-            track.id3data.TCON = {};
-            track.id3data.TYER.data = "Music";
-         }
-      }
+      };
+
+      syncTag("track", "TRCK", () => zeroPad(index + 1));
+      syncTag("artist", "TPE1", () => track.name.split(/[^ A-Za-z]/)[0]?.trim() || "Artist");
+      syncTag("title", "TIT2", () => track.name.split(/[^ A-Za-z]/)[1]?.trim() || "Track");
+      syncTag("album", "TALB", () => "Unknown");
+      syncTag("year", "TYER", () => "1999");
+      syncTag("genre", "TCON", () => "Music");
    });
 }
 
 function isCompilation() {
-   const trackData = tracks[0].id3data;
-   let artist = trackData.artist;
-   let album = trackData?.album;
-   let genre = trackData?.genre;
-   year = trackData?.year;
+   if (tracks.length < 2) return false;
 
-   const trackData2 = tracks[1].id3data;
-   let artist2 = trackData2.artist;
-   let album2 = trackData2?.album;
+   const { artist: artist1, album: album1, genre, year: yr } = tracks[0]?.id3data || {};
+   const { artist: artist2, album: album2 } = tracks[1]?.id3data || {};
 
-   return artist !== artist2 && album !== album2;
+   year = yr || "----"; // preserve global `year`
+
+   return artist1 !== artist2 && album1 !== album2;
 }
 
 function updatePlaylist() {
-   const trackData = tracks[0].id3data;
-   let artist = trackData.artist;
-   let album = trackData?.album;
-   let genre = trackData?.genre;
-   year = trackData?.year;
+   if (!tracks.length) return;
 
-   const trackData2 = tracks[1].id3data;
-   let artist2 = trackData2.artist;
-   let album2 = trackData2?.album;
+   let { artist, album, genre, year } = tracks[0]?.id3data || {};
+   const isMultiDisk = compilation;
 
-   if (compilation) {
+   if (isMultiDisk) {
       artist = "Various";
       album = "Compilation";
       genre = "Assorted";
       year = "0000";
    }
 
-   let disk = 1;
-   let lastTrack = 0;
-   let diskLabel = `<div class="disk-label">Disk 1</div>`;
-   let diskLabelAdded = false;
    albumLoaded = true;
    playlist.innerHTML = "";
-   tracks.forEach((track, index) => {
-      const trackElement = document.createElement("div");
-      trackElement.dataset.track = index;
-      trackElement.textContent = zeroPad(track.id3data.track.split("/")[0]) + " - " + track.id3data.title + (compilation ? " - " + track.id3data.artist : "");
-      trackElement.addEventListener("click", (event) => {
-         selectTrack(event.target.dataset.track);
-         updateCurrentTrack(event.target.dataset.track);
+
+   let disk = 1;
+   let lastTrackNumber = 0;
+   let diskLabelAdded = false;
+
+   const makeTrackElement = (track, index) => {
+      const trackNum = zeroPad(track.id3data.track.split("/")[0]);
+      const title = track.id3data.title;
+      const trackArtist = track.id3data.artist;
+      const text = `${trackNum} - ${title}${compilation ? " - " + trackArtist : ""}`;
+
+      const el = document.createElement("div");
+      el.dataset.track = index;
+      el.textContent = text;
+      if (index === currentTrackIndex) el.classList.add("selected");
+
+      el.addEventListener("click", () => {
+         selectTrack(index);
+         updateCurrentTrack(index);
          trackPlaying = true;
       });
-      if (index == currentTrackIndex) trackElement.classList.add("selected");
-      if (lastTrack > parseInt(track.id3data.track)) {
+
+      return el;
+   };
+
+   tracks.forEach((track, index) => {
+      const trackNumber = parseInt(track.id3data.track);
+      if (trackNumber < lastTrackNumber) {
          if (!diskLabelAdded) {
-            playlist.insertAdjacentHTML("afterbegin", diskLabel);
+            playlist.insertAdjacentHTML("afterbegin", `<div class="disk-label">Disk ${disk}</div>`);
             diskLabelAdded = true;
          }
          disk++;
-         playlist.insertAdjacentHTML("beforeend", diskLabel.replace("1", disk));
+         playlist.insertAdjacentHTML("beforeend", `<div class="disk-label">Disk ${disk}</div>`);
       }
-      lastTrack = parseInt(track.id3data.track);
-      playlist.appendChild(trackElement);
+      lastTrackNumber = trackNumber;
+      playlist.appendChild(makeTrackElement(track, index));
    });
 
-   displayTrkSong.innerHTML = renderText(centreText(useCaps(artist)));
-   displayArtist.innerHTML = renderText(centreText(useCaps(album)));
-   displayAlbum.innerHTML = renderText(centreText(useCaps(genre)));
-   displayMiscInfo.innerHTML = renderText(centreText(year));
+   const renderCentered = (text) => renderText(centreText(useCaps(text)));
+   displayTrkSong.innerHTML = renderCentered(artist);
+   displayArtist.innerHTML = renderCentered(album);
+   displayAlbum.innerHTML = renderCentered(genre);
+   displayMiscInfo.innerHTML = renderText(centreText(year || "----"));
 
-   showCoverArt(trackData);
+   showCoverArt(tracks[0].id3data);
    audioElement.volume = volumeSlider.slider("value") / 100;
 }
 
-function useCaps(text) {
-   return style.getPropertyValue("--useCaps") == "true" ? text.toUpperCase() : text;
-}
+const useCaps = (text) => (style.getPropertyValue("--useCaps") === "true" ? text.toUpperCase() : text);
 
-function centreText(text) {
-   if (!text) return;
-   const lpad = DISPLAY_WIDTH / 2 - text.length / 2;
-   const rpad = DISPLAY_WIDTH - lpad + text.length;
+const centreText = (text) => {
+   if (!text) return "";
+   const pad = DISPLAY_WIDTH - text.length;
+   const lpad = Math.floor(pad / 2);
+   const rpad = pad - lpad;
    return `${" ".repeat(lpad)}${text}${" ".repeat(rpad)}`;
-}
+};
 
-function updateCurrentTrack(newTrack) {
-   showCoverArt(tracks[newTrack].id3data);
-   Array.from(playlist.children).forEach((sibling) => {
-      if (newTrack == sibling.dataset.track) sibling.classList.add("selected");
-      else sibling.classList.remove("selected");
-   });
-}
+const updateCurrentTrack = (newTrack) => {
+   showCoverArt(tracks[newTrack]?.id3data);
+   [...playlist.children].forEach((sibling) => sibling.classList.toggle("selected", +sibling.dataset.track === newTrack));
+};
 
-function selectTrack(index) {
+const selectTrack = (index) => {
    currentTrackIndex = index;
    loadTrack();
-}
+};
 
 function loadTrack() {
-   if (tracks.length === 0) return;
+   if (!tracks?.length) return;
+
    const track = tracks[currentTrackIndex];
+   const id3 = track?.id3data;
+
    audioElement.src = URL.createObjectURL(track);
    audioElement.load();
-   audioElement.addEventListener("loadedmetadata", () => {
-      displayTrkSong.innerHTML = renderText(`${track.id3data.track} ${useCaps(track.id3data.title)}`);
-      displayArtist.innerHTML = renderText(useCaps(track.id3data.artist));
-      displayAlbum.innerHTML = renderText(useCaps(track.id3data.album));
+
+   const updateDisplay = () => {
+      if (!id3) return;
+
+      displayTrkSong.innerHTML = renderText(`${id3.track} ${useCaps(id3.title)}`);
+      displayArtist.innerHTML = renderText(useCaps(id3.artist));
+      displayAlbum.innerHTML = renderText(useCaps(id3.album));
+
       audioElement.volume = volumeSlider.slider("value") / 100;
-      displayMiscInfo.innerHTML = renderText(`${year}    00:00/${formatTime(audioElement.duration)}    ${getVolume()}`);
-   });
-   audioElement.addEventListener("ended", nextTrack);
+
+      const metaInfo = `${year || "----"}    00:00/${formatTime(audioElement.duration)}    ${getVolume()}`;
+      displayMiscInfo.innerHTML = renderText(metaInfo);
+   };
+
+   audioElement.addEventListener("loadedmetadata", updateDisplay, { once: true });
+   audioElement.addEventListener("ended", nextTrack, { once: true });
 }
 
 function playTrack() {
-   if (!audioElement.paused) {
-      audioElement.pause();
-   } else if (trackPlaying) {
+   if (!audioElement.paused) return audioElement.pause();
+
+   if (trackPlaying) {
       audioContext.resume().then(() => {
          audioElement.play();
          startAnalyser();
@@ -313,51 +301,42 @@ function playTrack() {
    } else {
       selectTrack(currentTrackIndex);
       trackPlaying = true;
-      audioElement.play();
       audioElement.currentTime = 0;
+      audioElement.play();
       startAnalyser();
    }
 }
 
-function stopTrack() {
+const stopTrack = () => {
    audioElement.pause();
    audioElement.currentTime = 0;
    trackPlaying = false;
-}
+};
 
-function nextTrack() {
-   currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
+const changeTrack = (direction) => {
+   const total = tracks.length;
+   currentTrackIndex = (currentTrackIndex + direction + total) % total;
    updateCurrentTrack(currentTrackIndex);
    loadTrack();
    audioElement.play();
-}
+};
 
-function prevTrack() {
-   currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length;
-   updateCurrentTrack(currentTrackIndex);
-   loadTrack();
-   audioElement.play();
-}
+const nextTrack = () => changeTrack(1);
+const prevTrack = () => changeTrack(-1);
 
-function fastForward() {
-   audioElement.currentTime += 10;
-   if (audioElement.currentTime >= audioElement.duration) {
-      audioElement.currentTime = audioElement.duration; // Prevent going beyond the end
-   }
-}
+const fastForward = () => {
+   audioElement.currentTime = Math.min(audioElement.currentTime + 10, audioElement.duration);
+};
 
-function rewind() {
-   audioElement.currentTime -= 10;
-   if (audioElement.currentTime < 0) {
-      audioElement.currentTime = 0; // Prevent going before the start
-   }
-}
+const rewind = () => {
+   audioElement.currentTime = Math.max(audioElement.currentTime - 10, 0);
+};
 
-function formatTime(seconds) {
-   const minutes = Math.floor(seconds / 60);
+const formatTime = (seconds) => {
+   const mins = Math.floor(seconds / 60);
    const secs = Math.floor(seconds % 60);
-   return `${zeroPad(minutes)}:${zeroPad(secs)}`;
-}
+   return `${zeroPad(mins)}:${zeroPad(secs)}`;
+};
 
 function startAnalyser() {
    if (!audioSource) {
@@ -379,6 +358,7 @@ function startAnalyser() {
          movement(1, leftLevel);
          movement(2, rightLevel);
       }
+
       if (vuMetersType == "bargraph") {
          leftLevelElement.style.width = 100 - Math.round((leftLevel * (100 / 255)) / 8) * 8 + "%";
          rightLevelElement.style.width = 100 - Math.round((rightLevel * (100 / 255)) / 8) * 8 + "%";
@@ -394,299 +374,233 @@ function initDisplay() {
    displayTrkSong.innerHTML = renderText("-".repeat(DISPLAY_WIDTH));
    displayArtist.innerHTML = renderText("-".repeat(DISPLAY_WIDTH));
    displayAlbum.innerHTML = renderText("-".repeat(DISPLAY_WIDTH));
-   displayMiscInfo.innerHTML = renderText(`---- -----------      ${getVolume()}`);
+   displayMiscInfo.innerHTML = renderText(`---- -----------       ${getVolume()}`);
 }
 
 function insertScrews() {
-   if (theme != "retro") return;
-   const screws = document.querySelectorAll(".screws");
-   screws.forEach((screw) => {
-      screw.remove();
-   });
+   document.querySelectorAll(".screws").forEach((el) => el.remove());
+   if (theme !== "Retro") return;
+
+   const positions = ["left:7px;top:7px;", "right:7px;top:7px;", "right:7px;bottom:7px;", "left:7px;bottom:7px;"];
+
+   const createScrew = () => `<img alt="screw" style="${randomRotation()}" />`;
+
+   const randomRotation = () => `transform:rotate(${Math.floor(Math.random() * 180) + 1}deg);`;
 
    document.querySelectorAll('div[class*="-container"]').forEach((div) => {
-      const padd = "7px;";
-      div.insertAdjacentHTML(
-         "beforeend",
-         `<div class="screws">
-            ${screw}left:${padd}top:${padd}${angle()}"/>
-            ${screw}right:${padd}top:${padd}${angle()}"/>
-            ${screw}right:${padd}bottom:${padd}${angle()}"/>
-            ${screw}left:${padd}bottom:${padd}${angle()}"/>
-         </div>`
-      );
+      const screwImgs = positions.map((pos) => `${createScrew().replace('style="', `style="${pos}${randomRotation()}`)}`).join("");
+      div.insertAdjacentHTML("beforeend", `<div class="screws">${screwImgs}</div>`);
    });
-
-   function angle() {
-      return `transform:rotate(${Math.round(180 * Math.random()) + 1}deg);`;
-   }
 }
 
-function outputPerformanceTime(contextTime) {
-   const timestamp = context.getOutputTimestamp();
-   const elapsedTime = contextTime - timestamp.contextTime;
-   return timestamp.performanceTime + elapsedTime * 1000;
-}
+const outputPerformanceTime = (contextTime) => {
+   const { contextTime: baseContext, performanceTime } = context.getOutputTimestamp();
+   const elapsedMs = (contextTime - baseContext) * 1000;
+   return performanceTime + elapsedMs;
+};
 
-function movement(meter, value) {
-   const deflection = parseInt(style.getPropertyValue("--deflection").replace("deg", ""));
-   document.querySelector("#pol" + meter).style.opacity = value > 180 ? 1 : 0;
-   document.querySelector("#pointer" + meter).style.WebkitTransform = `rotate(${(value / 255) * (Math.abs(deflection) * 2) + deflection}deg)`;
-}
+const movement = (meter, value) => {
+   const deflectionDeg = parseInt(style.getPropertyValue("--deflection"), 10) || 0;
+   const opacity = value > 180 ? 1 : 0;
+   const rotation = (value / 255) * (Math.abs(deflectionDeg) * 2) + deflectionDeg;
+
+   const polEl = document.querySelector(`#pol${meter}`);
+   const pointerEl = document.querySelector(`#pointer${meter}`);
+
+   if (polEl) polEl.style.opacity = opacity;
+   if (pointerEl) pointerEl.style.WebkitTransform = `rotate(${rotation.toFixed(2)}deg)`;
+};
 
 function initSliders() {
-   const sliderOrientation = style.getPropertyValue("--deflection");
+   const sliderKnobHTML = `
+      <div class="my-handle ui-slider-handle">
+         <img alt="slider_knob" class="slider-knob" border="0" />
+      </div>`;
 
-   sliderKnob = `<div class="my-handle ui-slider-handle">
-                    <img alt="slider_knob" class="slider-knob" border="0">
-                 </div>`;
+   const setupSlider = (slider, orientationVar, options, extraClass = "") => {
+      const orientation = style.getPropertyValue(orientationVar);
+      slider.parent().removeClass("horizontal vertical");
+      if (extraClass) slider.parent().addClass(`${orientation} ${extraClass}`);
+      else slider.parent().addClass(orientation);
+      slider.append(sliderKnobHTML);
+      slider.slider({ orientation, ...options });
+   };
 
-   const volumeSliderOrientation = style.getPropertyValue("--volumeSliderStyle");
-   volumeSlider.parent().addClass(volumeSliderOrientation);
-   volumeSlider.append(sliderKnob);
-   volumeSlider.slider({
-      orientation: volumeSliderOrientation,
+   setupSlider(volumeSlider, "--volumeSliderStyle", {
       range: "min",
       min: 0,
       max: 100,
       value: 5,
-      slide: function (a, b) {
+      slide: (_, ui) => {
          volume = true;
          const volWidth = DISPLAY_WIDTH - 3;
-         if (audioElement) audioElement.volume = b.value / 100;
-         a = Math.ceil((b.value * volWidth) / 100);
-         a = a > volWidth ? volWidth : a;
+         if (audioElement) audioElement.volume = ui.value / 100;
+         const bars = Math.ceil((ui.value * volWidth) / 100);
          const volStr = `VOL${
-            a != Math.round((b.value * volWidth) / 100) ? "^".repeat(a - 1) + "|" + " ".repeat(27 - a) : "^".repeat(a) + " ".repeat(volWidth - a)
+            bars !== Math.round((ui.value * volWidth) / 100)
+               ? "^".repeat(bars - 1) + "|" + " ".repeat(27 - bars)
+               : "^".repeat(bars) + " ".repeat(volWidth - bars)
          }`;
          displayMiscInfo.innerHTML = renderText(volStr);
          mask();
       },
-      stop: function (event, ui) {
+      stop: () => {
          volume = false;
       },
    });
 
-   const balanceSliderOrientation = style.getPropertyValue("--volumeSliderStyle");
-   balanceSlider.parent().addClass(balanceSliderOrientation);
-   balanceSlider.append(sliderKnob);
-   balanceSlider.slider({
-      orientation: balanceSliderOrientation,
+   setupSlider(balanceSlider, "--balanceSliderStyle", {
       range: "min",
       min: -1,
       max: 1,
-      value: -0.015,
+      value: 0,
       step: 0.01,
-      slide: function (a, b) {
+      slide: (_, ui) => {
          balance = true;
          const balWidth = DISPLAY_WIDTH - 3;
-         a = Math.ceil(parseInt(b.value * (parseInt(balWidth / 2) + 1)) + (parseInt(balWidth / 2) + 1));
-         const balStr = "L" + "-".repeat(a) + "i" + "-".repeat(balWidth - a) + "R";
+         const offset = Math.ceil(ui.value * (balWidth / 2 + 1) + (balWidth / 2 + 1));
+         const balStr = `L${"-".repeat(offset)}i${"-".repeat(balWidth - offset)}R`;
          displayMiscInfo.innerHTML = renderText(balStr);
-         stereoNode.pan.value = b.value;
+         stereoNode.pan.value = ui.value;
          mask();
       },
-      stop: function (event, ui) {
+      stop: () => {
          balance = false;
       },
    });
 
-   const brightnessSliderOrientation = style.getPropertyValue("--brightnessSliderStyle");
-   brightnessSlider.parent().addClass(brightnessSliderOrientation + " small");
-   brightnessSlider.append(sliderKnob);
-   brightnessSlider.slider({
-      orientation: brightnessSliderOrientation,
-      range: "min",
-      min: 50,
-      max: 100,
-      value: 75,
-      slide: function (a, b) {
-         brightness = 1 - b.value / 100;
-         mask();
+   setupSlider(
+      brightnessSlider,
+      "--brightnessSliderStyle",
+      {
+         range: "min",
+         min: 50,
+         max: 100,
+         value: 75,
+         slide: (_, ui) => {
+            brightness = 1 - ui.value / 100;
+            mask();
+         },
       },
-   });
+      "small"
+   );
 }
 
-function renderText(msg) {
-   if (!msg) msg = "-".repeat(DISPLAY_WIDTH);
+function renderText(msg = "-".repeat(DISPLAY_WIDTH)) {
+   const SYMBOL_MAP = {
+      32: ["space-comma", "upper", true],
+      44: ["space-comma", "lower", false],
+      63: ["question-exclamation", "upper", false],
+      33: ["question-exclamation", "lower", false],
+      42: ["hash-star", "lower", false],
+      35: ["hash-star", "upper", false],
+      38: ["amp-period", "upper", false],
+      46: ["amp-period", "lower", false],
+      64: ["at-dollar", "upper", false],
+      36: ["at-dollar", "lower", false],
+      163: ["yen-pound", "lower", false],
+      34: ["quote-apost", "upper", false],
+      39: ["quote-apost", "lower", false],
+      58: ["colon-semicolon", "upper", false],
+      59: ["colon-semicolon", "lower", false],
+      45: ["dash-slash", "upper", false],
+      47: ["dash-slash", "lower", false],
+      124: ["bar-dblbar", "upper", false],
+      94: ["bar-dblbar", "lower", false],
+      40: ["bracket", "upper", false],
+      60: ["bracket", "upper", false],
+      91: ["bracket", "upper", false],
+      123: ["bracket", "upper", false],
+      41: ["bracket", "lower", false],
+      62: ["bracket", "lower", false],
+      93: ["bracket", "lower", false],
+      125: ["bracket", "lower", false],
+   };
 
    let disp = "";
 
-   for (let charPos = 0; charPos < DISPLAY_WIDTH; charPos++) {
-      let text = "";
-      let textCase = "";
+   for (let i = 0; i < DISPLAY_WIDTH; i++) {
+      let char = msg.charAt(i);
+      let text = char;
+      let textCase = char === char.toUpperCase() ? "upper" : "lower";
       let isSpace = false;
 
-      text = msg.charAt(charPos);
-
-      textCase = text === text.toUpperCase() ? "upper" : "lower";
-
-      if ($.isNumeric(text)) {
-         textCase = text % 2 === 0 ? "upper" : "lower";
-         text = 2 * parseInt(text / 2);
-         text = text.toString() + (text + 1).toString();
+      if ($.isNumeric(char)) {
+         const base = 2 * Math.floor(parseInt(char, 10) / 2);
+         text = `${base}${base + 1}`;
+         textCase = base % 2 === 0 ? "upper" : "lower";
       } else {
-         const charCode = text.charCodeAt(0);
-         if (charCode > 31 && charCode < 256) {
-            switch (charCode) {
-               case 32:
-                  text = "space-comma";
-                  textCase = "upper";
-                  isSpace = true;
-                  break;
-               case 44:
-                  text = "space-comma";
-                  textCase = "lower";
-                  break;
-               case 63:
-                  text = "question-exclamation";
-                  textCase = "upper";
-                  break;
-               case 33:
-                  text = "question-exclamation";
-                  textCase = "lower";
-                  break;
-               case 42:
-                  text = "hash-star";
-                  textCase = "lower";
-                  break;
-               case 35:
-                  text = "hash-star";
-                  textCase = "upper";
-                  break;
-               case 38:
-                  text = "amp-period";
-                  textCase = "upper";
-                  break;
-               case 46:
-                  text = "amp-period";
-                  textCase = "lower";
-                  break;
-               case 64:
-                  text = "at-dollar";
-                  textCase = "upper";
-                  break;
-               case 36:
-                  text = "at-dollar";
-                  textCase = "lower";
-                  break;
-               case 163:
-                  text = "yen-pound";
-                  textCase = "lower";
-                  break;
-               case 34:
-                  text = "quote-apost";
-                  textCase = "upper";
-                  break;
-               case 39:
-                  text = "quote-apost";
-                  textCase = "lower";
-                  break;
-               case 58:
-                  text = "colon-semicolon";
-                  textCase = "upper";
-                  break;
-               case 59:
-                  text = "colon-semicolon";
-                  textCase = "lower";
-                  break;
-               case 45:
-                  text = "dash-slash";
-                  textCase = "upper";
-                  break;
-               case 47:
-                  text = "dash-slash";
-                  textCase = "lower";
-                  break;
-               case 124:
-                  text = "bar-dblbar";
-                  textCase = "upper";
-                  break;
-               case 94:
-                  text = "bar-dblbar";
-                  textCase = "lower";
-                  break;
-               case 40:
-               case 60:
-               case 91:
-               case 123:
-                  text = "bracket";
-                  textCase = "upper";
-                  break;
-               case 41:
-               case 62:
-               case 93:
-               case 125:
-                  text = "bracket";
-                  textCase = "lower";
-                  break;
-            }
-         } else {
+         const code = char.charCodeAt(0);
+         if (code > 31 && code < 256 && SYMBOL_MAP[code]) {
+            [text, textCase, isSpace] = SYMBOL_MAP[code];
+         } else if (code <= 31 || code >= 256) {
             text = "space-comma";
             textCase = "upper";
             isSpace = true;
          }
       }
 
-      if (text && textCase) {
-         const maskClass = isSpace ? " space" : ""; // Determine if we need a space class
-         disp += `<div style="background:url(${charDir}${text.toLowerCase()}.jpg)" class="${textCase}">
-                       <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=" class="mask${maskClass}" />
-                    </div>`;
-      }
+      const maskClass = isSpace ? " space" : "";
+      disp += `
+         <div style="background:url(${charDir}${text.toLowerCase()}.webp)" class="${textCase}">
+            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAgCAYAAAASYli2AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAKElEQVRIx+3MMREAAAgEoNf+nbWE5wQBqCSTQ32ZCYVCoVAoFAq/wwVgqQE/K1AduAAAAABJRU5ErkJggg==" 
+            width="20" height="32" class="mask${maskClass}" alt="mask" />
+         </div>
+      `;
    }
 
-   return disp; // Return the final display string
+   return disp;
 }
 
 function timertime() {
    if (balance || volume) return true;
-   const yr = year ? year : "----";
-   if (trackPlaying)
-      displayMiscInfo.innerHTML = renderText(`${yr}    ${formatTime(audioElement.currentTime)}/${formatTime(audioElement.duration)}    ${getVolume()}`);
-   else {
-      const date = new Date();
-      const hours = zeroPad(date.getHours());
-      const mins = zeroPad(date.getMinutes());
-      const secs = zeroPad(date.getSeconds());
-      const blink = secs % 2 ? " " : ":";
-      const time = `${hours}${blink}${mins}${blink}${secs}`;
-      displayMiscInfo.innerHTML = renderText(`${yr}      ${time}     ${getVolume()}`);
-   }
+
+   const yr = year || "----";
+
+   const infoText = trackPlaying
+      ? `${yr}    ${formatTime(audioElement.currentTime)}/${formatTime(audioElement.duration)}    ${getVolume()}`
+      : (() => {
+           const date = new Date();
+           const blink = date.getSeconds() % 2 ? " " : ":";
+           const time = [zeroPad(date.getHours()), zeroPad(date.getMinutes()), zeroPad(date.getSeconds())].join(blink);
+           return `${yr}      ${time}     ${getVolume()}`;
+        })();
+
+   displayMiscInfo.innerHTML = renderText(infoText);
    mask();
 }
 
-function zeroPad(num, pad = 2) {
-   return String(num).padStart(pad, "0");
-}
+const zeroPad = (num, pad = 2) => String(num).padStart(pad, "0");
 
-function mask() {
-   const masks = document.querySelectorAll(".mask:not(.space)");
-   masks.forEach((mask) => {
-      mask.style.opacity = brightness;
+const mask = () => {
+   document.querySelectorAll(".mask:not(.space)").forEach((el) => {
+      el.style.opacity = brightness;
    });
-}
+};
 
-function getVolume() {
-   return `VOL ${zeroPad(volumeSlider.slider("value"), 3)}`;
-}
+const getVolume = () => `VOL ${zeroPad(volumeSlider.slider("value"), 3)}`;
 
 function getId3Data(track) {
-   jsmediatags.read(track, {
-      onSuccess: function (tag) {
-         track.id3data = tag.tags;
-      },
-      onError: function (error) {
-         track.id3data = false;
-      },
+   return new Promise((resolve) => {
+      jsmediatags.read(track, {
+         onSuccess: (tag) => {
+            track.id3data = tag.tags;
+            resolve();
+         },
+         onError: () => {
+            track.id3data = {};
+            resolve();
+         },
+      });
    });
 }
 
-function showCoverArt(track) {
+const showCoverArt = (track) => {
    if (track.picture) {
-      const coverData = track.picture;
-      let coverArt = "";
-      for (dataBlock = 0; dataBlock < coverData.data.length; dataBlock++) coverArt += String.fromCharCode(coverData.data[dataBlock]);
-      screen.style.backgroundImage = `url(data:${coverData.format};base64,${window.btoa(coverArt)})`;
-   } else screen.style.backgroundImage = "url(data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=)";
-}
+      const { data, format } = track.picture;
+      const binary = String.fromCharCode(...data);
+      screen.style.backgroundImage = `url(data:${format};base64,${btoa(binary)})`;
+   } else {
+      screen.style.backgroundImage = "url(data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=)";
+   }
+};

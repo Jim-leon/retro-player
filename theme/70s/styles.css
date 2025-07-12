@@ -1,4 +1,17 @@
-@import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&family=Rye&display=swap");
+/* @import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900");
+
+.web-font {
+   font-family: "Roboto", "Comic Sans MS";
+   font-optical-sizing: auto;
+   font-weight: 400;
+   font-style: normal;
+}
+
+@font-face {
+   font-family: "Victor Mono";
+   font-display: block;
+   src: url("victor-mono.woff2") format("woff2");
+} */
 
 :root {
    --deflection: -48deg;
@@ -11,7 +24,7 @@
 
 .grid-container {
    display: grid;
-   grid-template-columns: repeat(6, 1fr);
+   grid-template-columns: repeat(6, minmax(100px, 1fr));
    grid-template-rows: repeat(5, 1fr);
    gap: 8px;
    padding: 50px;
@@ -73,7 +86,11 @@
 }
 
 .slider-knob {
-   content: url(./imgs/slider-knob.png);
+   content: url(./imgs/slider-knob.webp);
+}
+
+#logo {
+   content: url(./imgs/logo.webp);
 }
 
 .hidden {
@@ -109,7 +126,7 @@ body {
 }
 
 body {
-   background-image: url(./imgs/brushed-metal.jpg);
+   background-image: url(./imgs/brushed-metal.webp);
    background-size: auto;
    background-repeat: repeat;
 }
@@ -132,6 +149,7 @@ img {
    scale: 0.5;
    transform-origin: 50% 85%;
    transition: transform 0.05s ease;
+   content: url(./imgs/needle.webp);
 }
 
 .labels,
@@ -152,7 +170,7 @@ img {
 .meter {
    height: 113px;
    width: 100%;
-   background-image: url(./imgs/vu-meter.png);
+   background-image: url(./imgs/vu-meter.webp);
    margin: 0 auto;
    background-size: contain;
 }
@@ -183,14 +201,14 @@ img {
 .controls-container .wrapper .img {
    width: 61px;
    height: 90px;
-   left: -9px;
    top: 5px;
-   margin: 5px auto;
-   background-image: url(./imgs/controls.png);
+   margin: 0 10px;
+   background-image: url(./imgs/controls.webp);
    position: relative;
    opacity: 0.8;
    background-color: transparent;
    border: none;
+   cursor: pointer;
 }
 
 .controls-container .img.select-song {
@@ -233,12 +251,12 @@ img {
 .controls-container .img.playpause:after {
    content: "";
    position: absolute;
-   width: 40px;
-   height: 40px;
+   width: 37px;
+   height: 37px;
    border-radius: 50%;
    background-color: transparent;
-   bottom: 12px;
-   left: 12px;
+   bottom: 10px;
+   left: 10px;
    border: 3px solid;
    transition: all 0.3s ease-out;
 }
@@ -259,6 +277,8 @@ img {
    display: block;
    overflow: inherit;
    padding: 5px 0;
+   width: 626px;
+   height: 54px;
 }
 
 .screen-wrapper {
@@ -281,7 +301,7 @@ img {
 .display-container,
 .screen-container,
 .logo-container {
-   background-image: url(./imgs/plate.png);
+   background-image: url(./imgs/plate.webp);
    background-repeat: no-repeat;
    background-position: center center;
    background-size: cover;
@@ -307,6 +327,10 @@ img {
    bottom: 0;
    right: 0;
    background-color: #fffffff0;
+}
+
+.logo-container img {
+   width: 100px;
 }
 
 #playlist {
@@ -354,7 +378,6 @@ img {
 
 .display-row > div {
    margin: 3px 10px;
-   float: left;
    display: inline-block;
    border: 3px inset #c9c9c9;
 }
@@ -388,7 +411,7 @@ img {
    position: absolute;
    width: 2vw;
    height: 2vw;
-   content: url(./imgs/corner.png);
+   content: url(./imgs/corner.webp);
 }
 
 .label,
@@ -452,9 +475,9 @@ img {
 }
 
 .slider.ui-slider .ui-slider-handle {
-   width: 58px;
-   height: 38px;
-   top: -20px;
+   width: 0;
+   height: 0;
+   top: 10px;
    border: none;
    outline: none;
 }
@@ -486,6 +509,34 @@ img {
    height: 160px !important;
 }
 
+.ui-slider-horizontal {
+   height: 0 !important;
+   width: 427px !important;
+   left: -10px;
+}
+
+.levels {
+   height: 78px;
+   width: 440px;
+}
+
+.ui-slider-vertical {
+   width: 0 !important;
+   height: 160px !important;
+}
+
+/* .brightness-level-container .levels.vertical:before {
+   height: 40%;
+} */
+
+.ui-slider-vertical .ui-slider-handle {
+   left: 182px !important;
+   /* margin-bottom: 32px !important; */
+}
+.levels.vertical::before {
+   transform: rotate(270deg);
+}
+
 .levels::before {
    content: "";
    position: absolute;
@@ -495,15 +546,15 @@ img {
    background-size: 100% 100%;
    background-position: center;
    background-repeat: no-repeat;
-   background-image: url(./imgs/slider-bezel.png);
+   background-image: url(./imgs/slider-bezel.webp);
 }
 
-.levels.vertical::before {
-   transform: rotate(270deg);
+.levels.small {
+   zoom: 0.5;
 }
 
-.levels.sm {
-   zoom: 0.8;
+.levels.vertical.small {
+   margin-top: 190px;
 }
 
 .slider.ui-slider-vertical img {
@@ -550,12 +601,14 @@ img {
 
 .label.min,
 .label.lft {
-   position: relative;
-   left: -60px;
+   position: absolute;
+   left: -47px;
+   top: 29px;
 }
 
-.label.max,
-.label.rght {
-   position: relative;
-   right: -60px;
+.levels.horizontal .label.max,
+.levels.horizontal .label.rght {
+   position: absolute;
+   right: -40px;
+   top: 29px;
 }

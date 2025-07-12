@@ -1,7 +1,9 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/html">
+<html xmlns="http://www.w3.org/1999/html" lang="en">
    <head>
       <title>Retro Player</title>
+      <meta name="description" content="Browser baser MP3 Player" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
       <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
       <link rel="icon" type="image/svg+xml" href="favicon.svg" />
       <link rel="shortcut icon" href="favicon.ico" />
@@ -13,10 +15,10 @@
 
    <body>
       <div class="corners">
-         <img class="top left" />
-         <img class="top right" />
-         <img class="bottom left" />
-         <img class="bottom right" />
+         <img class="top left" alt="corner" />
+         <img class="top right" alt="corner" />
+         <img class="bottom left" alt="corner" />
+         <img class="bottom right" alt="corner" />
       </div>
       <div class="grid-container">
          <div class="meter-container">
@@ -38,7 +40,7 @@
             <div class="analogue">
                <div class="meter">
                   <div class="meter-face">
-                     <img id="pointer1" />
+                     <img id="pointer1" alt="left pointer" />
                      <span class="pol" id="pol1"></span>
                   </div>
                   <div class="label">LEFT</div>
@@ -46,7 +48,7 @@
 
                <div class="meter">
                   <div class="meter-face">
-                     <img id="pointer2" />
+                     <img id="pointer2" alt="right pointer" />
                      <span class="pol" id="pol2"></span>
                   </div>
                   <div class="label">RIGHT</div>
@@ -55,17 +57,18 @@
          </div>
          <div class="themes-container">
             <div class="select-wrapper">
+               <label for="themes">Theme</label>
                <select id="themes"></select>
             </div>
          </div>
          <div class="screen-container">
             <div class="screen-wrapper">
                <div id="playlist"></div>
-               <img />
+               <img alt="screen" />
             </div>
          </div>
          <div class="logo-container">
-            <img alt="logo" id="logo" />
+            <img alt="logo" id="logo" alt="logo" />
          </div>
          <div class="display-container">
             <div class="display-row">
@@ -105,24 +108,20 @@
             </div>
          </div>
          <div class="volume-level-container">
-            <!-- <div class="volume-control"> -->
             <p class="label title volm">VOLUME</p>
             <div class="levels">
                <p class="label min">MIN</p>
                <div class="slider volume-slider"></div>
                <p class="label max">MAX</p>
             </div>
-            <!-- </div> -->
          </div>
          <div class="balance-level-container">
-            <!-- <div class="balance-control"> -->
             <p class="label title blnce">BALANCE</p>
             <div class="levels">
                <p class="label lft">LEFT</p>
                <div class="slider balance-slider"></div>
                <p class="label rght">RIGHT</p>
             </div>
-            <!-- </div> -->
          </div>
       </div>
       <script src="js/jsmediatags.min.js"></script>

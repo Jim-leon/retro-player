@@ -189,6 +189,15 @@ img {
    overflow: hidden;
 }
 
+#pointer1,
+#pointer2 {
+   content: url(./imgs/needle.png);
+}
+
+#logo {
+   content: url(./imgs/logo.png);
+}
+
 .labels {
    width: 50%;
    left: 25%;
@@ -535,6 +544,10 @@ img {
 
 .levels.vertical::before {
    transform: rotate(270deg);
+}
+
+.slider.ui-slider-vertical img {
+   transform: rotate(90deg);
 }
 
 .ui-slider-horizontal .ui-slider-handle {

@@ -71,7 +71,7 @@
 }
 
 .slider-knob {
-   content: url(./imgs/slider-knob.png);
+   content: url(./imgs/slider-knob.webp);
 }
 
 .hidden {
@@ -117,7 +117,7 @@ body {
 }
 
 body {
-   background-image: url(imgs/background-tile.jpg);
+   background-image: url(imgs/background-tile.webp);
    background-size: auto;
    background-repeat: repeat;
 }
@@ -139,6 +139,17 @@ img {
    transform: rotate(var(--deflection));
 }
 
+#pointer1,
+#pointer2 {
+   position: absolute;
+   left: calc(50% - 11px);
+   bottom: -55%;
+   transform: rotate(var(--deflection));
+   scale: 0.5;
+   transform-origin: 50% 85%;
+   transition: transform 0.05s ease;
+   content: url(/imgs/needle.webp);
+
 .labels,
 .meter,
 .meter-face {
@@ -153,7 +164,7 @@ img {
 .meter {
    height: 177px;
    width: 174px;
-   background-image: url(imgs/vu-meter.png);
+   background-image: url(imgs/vu-meter.webp);
    margin: 0 auto;
 }
 
@@ -185,7 +196,7 @@ img {
    /* left: -9px;
    top: 5px; */
    margin: 5px auto;
-   background-image: url(imgs/controls.png);
+   background-image: url(imgs/controls.webp);
    position: relative;
    opacity: 0.8;
    background-color: transparent;
@@ -239,6 +250,10 @@ img {
    height: 100px;
 }
 
+#logo {
+   content: url(./imgs/logo.webp);
+}
+
 .display-row {
    display: block;
    overflow: inherit;
@@ -255,7 +270,7 @@ img {
 }
 
 .screen-wrapper > img {
-   content: url(imgs/screen.png);
+   content: url(imgs/screen.webp);
    position: absolute;
    top: 50%;
    left: 50%;
@@ -303,7 +318,7 @@ img {
 .screen-container,
 .logo-container,
 .themes-container {
-   background-image: url(imgs/plate.png);
+   background-image: url(imgs/plate.webp);
    background-repeat: no-repeat;
    background-position: center center;
    background-size: cover;
@@ -360,7 +375,11 @@ img {
    position: absolute;
    width: 5vw;
    height: 5vw;
-   content: url(imgs/corner.png);
+   content: url(imgs/corner.webp);
+}
+
+.screws img {
+   content: url(./imgs/screw.webp);
 }
 
 .label,
@@ -443,7 +462,7 @@ img {
    width: 440px;
    height: 78px;
    margin: 0 auto;
-   background-image: url(imgs/slider-bezel.png);
+   background-image: url(imgs/slider-bezel.webp);
    margin-bottom: 10px;
    display: flex;
    flex-direction: row;
@@ -510,7 +529,9 @@ img {
 }
 
 .select-wrapper {
-   background-image: url(imgs/insert-top.png);
+   background-image: url(imgs/insert-top.webp);
+   background-color: white;
+   position: relative;
    background-size: 100px 27px;
    background-repeat: no-repeat;
    background-position: center top;
@@ -520,17 +541,24 @@ img {
    align-items: anchor-center;
    outline: none;
    justify-content: center;
+   background-color: #967d42;
 }
 
 .select-wrapper:after {
    content: "";
    position: absolute;
-   background-image: url(imgs/insert-bottom.png);
+   background-image: url(imgs/insert-bottom.webp);
    background-repeat: no-repeat;
    width: 100px;
    height: 19px;
    background-size: 100px 19px;
-   outline: none;
-   background-position: center bottom;
-   overflow: visible;
+   left: 0;
+   right: 0;
+   bottom: 0;
+}
+
+#themes {
+   background: none;
+   border: none;
+   background-color: #967d42;
 }
